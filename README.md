@@ -1,3 +1,9 @@
+<h1 align="center">
+  <br>
+  Auto-poster & notifications
+  <br>
+</h1>
+
 <div align=center>
 
  [![Discord](https://img.shields.io/discord/658113349384667198.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8g6zUQu)
