@@ -1,13 +1,26 @@
-const { Client } = require('discord.js');
-const bot = new Client();
+const { Client } = require('discord.js'),
+	bot = new Client(),
+	{ Reddit: redditDB } = require('./database/models'),
+	{ get } = require('axios');
+
 
 bot.logger = require('./utils/logger');
 bot.config = require('./config');
-const { Reddit: redditDB } = require('./database/models');
 
 // Connect bot to database
 bot.mongoose = require('./database').init(bot);
+
+async function isValid(subreddit) {
+	const res = await get(`https://reddit.com/r/${subreddit}/about.json`).catch(() => null);
+
+	if (!res) return false;
+	if (res.status !== 200) return false;
+	if (res.data.hasOwnProperty('children')) {
+		if (res.data.children.length === 0) return false;
+	}
+	return true;
 }
+
 
 // ready event
 bot.on('ready', () => {
@@ -18,7 +31,7 @@ bot.on('ready', () => {
 	// Load all services
 	try {
 		require('./services/Reddit')(bot);
-	//	require('./services/Youtube')(bot);
+		// require('./services/Youtube')(bot);
 		// require('./services/Twitter')(twitter_client, bot, twtaccounts, true, functiondate, functiontime);
 	} catch (e) {
 		console.log(e);
@@ -30,6 +43,7 @@ bot.on('guildCreate', async (guild) => {
 	bot.logger.log(`[GUILD JOIN] ${guild.name} (${guild.id}) added the bot.`);
 });
 
+// When a message was sent
 bot.on('message', async (message) => {
 	if (message.content.startsWith('e!subreddit')) {
 		const args = message.content.split(' ');
@@ -40,6 +54,8 @@ bot.on('message', async (message) => {
 				}, async (err, data) => {
 					if (err) return bot.logger.error(err);
 					if (!data) {
+						const valid = await isValid(args[2]);
+						if (!valid) return message.channel.send('Not a valid subreddit name');
 						const newredditDB = new redditDB({
 							subredditName: args[2],
 							channelIDs: [`${message.channel.id}`],

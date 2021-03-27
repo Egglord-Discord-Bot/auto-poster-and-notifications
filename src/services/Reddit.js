@@ -41,23 +41,29 @@ async function fetchSub(sub) {
 }
 
 module.exports = async (bot) => {
-	// fetch reddit data from database
-	let subreddit = await redditDB.find({});
-	if (!subreddit[0]) return bot.logger.error('No subreddits to load.');
-
-	let subreddits = [];
-	for (let i = 0; i < subreddit.length; i++) {
-		subreddits.push(subreddit[i].subredditName);
-	}
-
-	setInterval(async () => {
+	let subreddits, subreddit;
+	async function RetrivedDate() {
+		// fetch reddit data from database
 		subreddit = await redditDB.find({});
 		if (!subreddit[0]) return bot.logger.error('No subreddits to load.');
 
 		subreddits = [];
 		for (let i = 0; i < subreddit.length; i++) {
-			subreddits.push(subreddit[i].subredditName);
+			if (subreddit[i].channelIDs.length >= 1) {
+				subreddits.push(subreddit[i].subredditName);
+			} else {
+				// delete from DB
+				await redditDB.findOneAndRemove({ subredditName: subreddit[i].subredditName }, (err) => {
+					if (err) console.log(err);
+				});
+			}
 		}
+	}
+	await RetrivedDate();
+
+
+	setInterval(async () => {
+		await RetrivedDate();
 	}, 5 * 60000);
 
 	bot.logger.ready(`Reddit poster loaded, listening to ${subreddits.length} subreddits`);
