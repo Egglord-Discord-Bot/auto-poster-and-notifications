@@ -14,8 +14,6 @@
     "eslint": "^7.22.0",
     "moment": "^2.29.1",
     "mongoose": "^5.12.2",
-    "reddit-helper": "^1.0.2",
-    "twitter-lite": "^1.1.0",
-    "youtube-notification": "^1.1.0"
+    "twitter-lite": "^1.1.0"
   }
 }
