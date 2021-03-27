@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^12.5.1",
-    "eslint": "^7.22.0",
+    "eslint": "^7.23.0",
     "moment": "^2.29.1",
     "mongoose": "^5.12.2",
     "reddit-helper": "^1.0.2",
