@@ -1,3 +1,4 @@
 module.exports = {
-	Reddit: require('./Reddit'),
+	RedditSchema: require('./RedditSchema'),
+	TwitterSchema: require('./TwitterSchema'),
 };
