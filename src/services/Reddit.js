@@ -1,7 +1,5 @@
-// const Reddit = require('reddit-helper');
 const { MessageEmbed } = require('discord.js');
-const { Reddit: redditDB } = require('../database/models');
-// const reddit = new Reddit();
+const { RedditSchema } = require('../database/models');
 let date = Math.floor(Date.now() / 1000);
 
 async function fetchSub(sub) {
@@ -44,7 +42,7 @@ module.exports = async (bot) => {
 	let subreddits, subreddit;
 	async function RetrivedDate() {
 		// fetch reddit data from database
-		subreddit = await redditDB.find({});
+		subreddit = await RedditSchema.find({});
 		if (!subreddit[0]) return bot.logger.error('No subreddits to load.');
 
 		subreddits = [];
@@ -53,7 +51,7 @@ module.exports = async (bot) => {
 				subreddits.push(subreddit[i].subredditName);
 			} else {
 				// delete from DB
-				await redditDB.findOneAndRemove({ subredditName: subreddit[i].subredditName }, (err) => {
+				await RedditSchema.findOneAndRemove({ subredditName: subreddit[i].subredditName }, (err) => {
 					if (err) console.log(err);
 				});
 			}
@@ -80,11 +78,6 @@ module.exports = async (bot) => {
 							if (subreddit[z].subredditName == res[i].sub.name) {
 								for (let y = 0; y < subreddit[z].channelIDs.length; y++) {
 									const channel = bot.channels.cache.get(subreddit[z].channelIDs[y]);
-									// If the bot doesn't have SEND_MESSAGES permissions just return
-									if (!channel.permissionsFor(bot.user).has('SEND_MESSAGES')) return;
-									if (!channel.permissionsFor(bot.user).has('EMBED_LINKS')) {
-										return channel.send('I am missing `EMBED_LINKS` permissions to send subreddits here');
-									}
 									if (channel) {
 										const embed = new MessageEmbed()
 											.setTitle(res[i].title)
@@ -93,7 +86,7 @@ module.exports = async (bot) => {
 											.setURL(res[i].permalink)
 											.setTimestamp()
 											.setColor('RANDOM');
-										channel.send(embed);
+										bot.addEmbed(channel.id, embed);
 									}
 								}
 							}
