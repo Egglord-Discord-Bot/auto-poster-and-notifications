@@ -8,22 +8,22 @@ exports.log = (content, type = 'log') => {
 switch(type) {
 	case'log':
 		console.log(`${timestamp} ${chalk.bgBlue(type.toUpperCase())} ${content} `);
-	break;
+	return;
 	case'warn':
 		console.log(`${timestamp} ${chalk.bgBlue(type.toUpperCase())} ${content} `);
-	break;
+	return;
 	case'error':
 		console.log(`${timestamp} ${chalk.bgRed(type.toUpperCase())} ${content} `);
-	break;
+	return;
 	case'debug':
 		console.log(`${timestamp} ${chalk.green(type.toUpperCase())} ${content} `);
-	break;
+	return;
 	case'cmd':
 		console.log(`${timestamp} ${chalk.black.bgWhite(type.toUpperCase())} ${content}`);
-	break;
+	return;
 	case'ready':
 		console.log(`${timestamp} ${chalk.black.bgGreen(type.toUpperCase())} ${content}`);
-	break;
+	return;
 	}
 };
 
