@@ -14,7 +14,7 @@
     "discord.js": "^12.5.1",
     "eslint": "^7.22.0",
     "moment": "^2.29.1",
-    "mongoose": "^5.12.2",
+    "mongoose": "^5.12.12",
     "request": "^2.88.2",
     "twitter-lite": "^1.1.0"
   }
