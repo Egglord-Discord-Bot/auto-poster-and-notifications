@@ -22,9 +22,12 @@ bot.on('ready', async () => {
 	bot.logger.log(`${bot.user.tag}, ready to serve [${bot.users.cache.size}] users in [${bot.guilds.cache.size}] servers.`, 'ready');
 	bot.logger.log('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=', 'ready');
 
-	// const { TwitterSchema } = require('./database/models');
-	// const newGuild = new TwitterSchema({	twitterName: 'spiderjockey02', channelIDs: ['761612724370931722'] });
-	// await newGuild.save();
+	const { TwitterSchema, RedditSchema } = require('./database/models');
+	const newGuild = new TwitterSchema({	twitterName: 'spiderjockey02', channelIDs: ['843890583381606421'] });
+	const newGuild2 = new RedditSchema({	subredditName: 'memes', channelIDs: ['843890583381606421'] });
+
+	await newGuild.save();
+	await newGuild2.save();
 
 	// Load all services
 	try {
