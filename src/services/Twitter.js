@@ -3,7 +3,7 @@ const Discord = require('discord.js');
 const Twitter = require('twitter-lite');
 const twtaccounts = [];
 let twt;
-module.exports = async (bot, debug = true) => {
+module.exports = async (bot) => {
 	// fetch data
 	let twitter;
 
@@ -41,10 +41,11 @@ module.exports = async (bot, debug = true) => {
 				}
 				return;
 			});
-
+		const channels = await TwitterSchema.findOne({ twitterName: twt[i] }).then(res => res.channelIDs);
 		twtaccounts.push({
 			'id' : result.id_str,
 			'twitter_name' : twt[i],
+			'channelId': channels,
 		});
 	}
 
@@ -70,7 +71,7 @@ module.exports = async (bot, debug = true) => {
 	let watchingids;
 	if (twtaccounts.length > 1) {
 		watchingids = [];
-		twtaccounts.forEach(acc=>{
+		twtaccounts.forEach(acc => {
 			watchingids.push(acc.id);
 		});
 		watchingids.join(', ');
@@ -99,83 +100,52 @@ module.exports = async (bot, debug = true) => {
 	Tstream.on('data', async function(tweet) {
 		try {
 			twtaccounts.forEach(async acc => {
+				console.log(acc);
 				if (!tweet.text || tweet.text == '') return;
 				if (tweet.user.id_str == acc.id) {
-					const debug_header = `[${functiondate()} - ${functiontime()} - ${acc} ] `;
-
-					const embed = new Discord.MessageEmbed;
-
-					const webhooks = await bot.channels.cache.get('761612724370931722').fetchWebhooks();
-					let webhook = webhooks.find(wh => wh.name == bot.user.username);
-					if (!webhook) {
-						webhook = await bot.channels.cache.get('761612724370931722').createWebhook(bot.user.username);
-					}
-
 					tweet.text.replace('&amp;', '&');
+					const embed = new Discord.MessageEmbed;
 					if (tweet.retweeted || tweet.text.startsWith('RT')) {
 						if (acc.retweet) {
-							if (debug) console.log(debug_header + `Retweet from @${tweet.retweeted_status.user.screen_name}`);
 							embed.setColor(acc.embed_color ? acc.embed_color : 'RANDOM')
 								.setAuthor(`Retweet\n${tweet.retweeted_status.user.name} (@${tweet.retweeted_status.user.screen_name})`, tweet.retweeted_status.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
 								.setDescription(tweet.retweeted_status.text)
 								.setTimestamp(tweet.retweeted_status.created_at)
 								.setThumbnail('https://img.icons8.com/color/96/000000/retweet.png');
 							if (tweet.retweeted_status.entities.media) embed.setImage(tweet.retweeted_status.entities.media[0].media_url_https);
-							if (bot.channels.cache.get('785239604072415232')) {
-								webhook.send('', {
-									username: tweet.user.name,
-									avatarURL: tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'),
-									embeds: [embed],
-								});
-							} else {return;}
-						} else if (!debug) {
-							console.log(debug_header + `Retweet from @${tweet.retweeted_status.user.screen_name}, but retweet config is disabled`);
+							acc.channelId.forEach(id => {
+								bot.addEmbed(id, embed);
+							});
 						}
 					} else if (tweet.retweeted === false || !tweet.text.startsWith('RT')) {
 						if (tweet.in_reply_to_status_id == null || tweet.in_reply_to_user_id == null) {
-							if (debug === true) console.log(debug_header + `Simple tweet, id ${tweet.id_str}`);
+							//	if (debug === true) console.log(debug_header + `Simple tweet, id ${tweet.id_str}`);
 							embed.setColor(acc.embed_color ? acc.embed_color : 'RANDOM')
 								.setAuthor(`${tweet.user.name} (@${tweet.user.screen_name})`, tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
 								.setDescription(tweet.text)
 								.setTimestamp(tweet.created_at);
 							if (tweet.entities.media) embed.setImage(tweet.entities.media[0].media_url_https);
-							if (bot.channels.cache.get('785239604072415232')) {
-								webhook.send('', {
-									username: tweet.user.name,
-									avatarURL: tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'),
-									embeds: [embed],
-								});
-							} else {
-								return;
-							}
-						} else if (tweet.in_reply_to_status_id != null || tweet.in_reply_to_user_id != null) {
-							if (!acc.reply) {
-								if (debug) console.log(debug_header + 'Reply to a tweet, but reply option is off');
-							} else {
-								if (debug) console.log(debug_header + `Reply to a tweet, id ${tweet.in_reply_to_status_id}`);
-								embed.setColor(acc.embed_color ? acc.embed_color : 'RANDOM')
-									.setAuthor(`${tweet.user.name} (@${tweet.user.screen_name})\nReply to @${tweet.in_reply_to_screen_name}`, tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
-									.setDescription(tweet.text.replace(`@${tweet.in_reply_to_screen_name}`, ''))
-									.setTimestamp(tweet.created_at)
-									.setThumbnail('https://cdn1.iconfinder.com/data/icons/messaging-3/48/Reply-512.png');
-								if (tweet.entities.media) embed.setImage(tweet.entities.media[0].media_url_https);
-								if (bot.channels.cache.get('785239604072415232')) {
-									webhook.send('', {
-										username: tweet.user.name,
-										avatarURL: tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'),
-										embeds: [embed],
-									});
-								} else {
-									return;
-								}
-							}
+							acc.channelId.forEach(id => {
+								bot.addEmbed(id, embed);
+							});
+						}
+					} else if (tweet.in_reply_to_status_id != null || tweet.in_reply_to_user_id != null) {
+						if (acc.reply) {
+							embed.setColor(acc.embed_color ? acc.embed_color : 'RANDOM')
+								.setAuthor(`${tweet.user.name} (@${tweet.user.screen_name})\nReply to @${tweet.in_reply_to_screen_name}`, tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
+								.setDescription(tweet.text.replace(`@${tweet.in_reply_to_screen_name}`, ''))
+								.setTimestamp(tweet.created_at)
+								.setThumbnail('https://cdn1.iconfinder.com/data/icons/messaging-3/48/Reply-512.png');
+							if (tweet.entities.media) embed.setImage(tweet.entities.media[0].media_url_https);
+							acc.channelId.forEach(id => {
+								bot.addEmbed(id, embed);
+							});
 						}
 					}
 				}
 			});
 		} catch (e) {
-			if (debug) console.log('ERROR: ' + e);
-			if (debug) console.log(tweet);
+			console.log(e);
 		}
 	});
 
