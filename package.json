@@ -20,6 +20,6 @@
     "youtube-notification": "^1.1.0"
   },
   "devDependencies": {
-    "eslint": "^7.30.0"
+    "eslint": "^8.4.0"
   }
 }
