@@ -1,51 +1,44 @@
-const { MessageEmbed } = require('discord.js');
-const { RedditSchema } = require('../database/models');
-let date = Math.floor(Date.now() / 1000);
+const { MessageEmbed } = require('discord.js'),
+	{ RedditSchema } = require('../database/models'),
+	fetch = require('node-fetch');
 
-async function fetchSub(sub) {
-	return new Promise((resolve) => {
-		try {
-			require('request')({ url: `https://reddit.com/r/${sub}/new.json?limit=3`, json: true }, async (err, res, body) => {
-				if (!res) res = { statusCode: 404 };
-				if (res.statusCode === 200) {
-					const posts = [];
-					for await (const post of body.data.children.reverse()) {
-						if (date <= post.data.created_utc) {
-							date = post.data.created_utc;
-							const p = post.data;
-							posts.push({
-								title: p.title || '',
-								url: p.url || '',
-								permalink: `https://reddit.com${p.permalink}`,
-								author: {
-									name: p.author || 'Deleted',
-								},
-								sub: {
-									name: p.subreddit || sub,
-								},
-							});
+let date = Math.floor(Date.now() / 1000);
+class RedditFetcher {
+	constructor(bot) {
+		this.bot = bot;
+		this.subreddits;
+	}
+
+	async fetchPosts() {
+		setInterval(async () => {
+			this.subreddits.forEach(async sub => {
+				console.log(sub);
+				if (sub) {
+					const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
+					if (resp.data?.children) {
+						for (const post of resp.data.children.reverse()) {
+							console.log(date);
+							console.log(post.data.created_utc);
+							console.log(date <= post.data.created_utc);
+							if (date <= post.data.created_utc) {
+								const t = new RedditPost(post);
+								console.log(t);
+							}
 						}
 					}
-					if (posts.length === 0) return resolve([]);
-					++date;
-					return resolve(posts);
 				}
 			});
-		} catch(err) {
-			console.log(err);
-			resolve([]);
-		}
-	});
-}
+			date = Math.floor(Date.now() / 1000);
+		}, 60000);
+	}
 
-module.exports = async (bot) => {
-	let subreddits, subreddit;
-	async function RetrivedDate() {
+	// Updates subreddit list every 5 minutes
+	async updateSubredditList() {
 		// fetch reddit data from database
-		subreddit = await RedditSchema.find({});
-		if (!subreddit[0]) return bot.logger.error('No subreddits to load.');
+		const subreddit = await RedditSchema.find({});
+		if (!subreddit[0]) return this.bot.logger.error('No subreddits to load.');
 
-		subreddits = [];
+		const subreddits = [];
 		for (let i = 0; i < subreddit.length; i++) {
 			if (subreddit[i].channelIDs.length >= 1) {
 				subreddits.push(subreddit[i].subredditName);
@@ -56,44 +49,34 @@ module.exports = async (bot) => {
 				});
 			}
 		}
+		this.subreddits = subreddits;
 	}
-	await RetrivedDate();
 
+	// init the class
+	async init() {
+		await this.updateSubredditList();
+		await new Promise(res => setTimeout(res, 60 * 1000));
+		await this.fetchPosts();
 
-	setInterval(async () => {
-		await RetrivedDate();
-	}, 5 * 60000);
+		// Update subreddit list every 5 minutes
+		setInterval(async () => {
+			await this.updateSubredditList();
+		}, 5 * 60000);
+	}
+}
 
-	bot.logger.ready(`Reddit poster loaded, listening to ${subreddits.length} subreddits`);
+class RedditPost {
+	constructor({ title, subreddit, permalink, url, ups, downs, author, num_comments, over_18, media }) {
+		this.title = title;
+		this.subreddit = subreddit;
+		this.link = `https://www.reddit.com${permalink}`;
+		this.imageURL = media ? media.oembed.thumbnail_url : url;
+		this.upvotes = ups ?? 0;
+		this.downvotes = downs ?? 0;
+		this.author = author;
+		this.comments = num_comments ?? 0;
+		this.nsfw = over_18;
+	}
+}
 
-	setInterval(async () => {
-		subreddits.forEach(async sub => {
-			if (sub) {
-				const res = await fetchSub(sub);
-				if (res.length !== 0) {
-					bot.logger.debug(`Retrieved ${res.length} new subreddit posts`);
-					for (let i = 0; i < res.length; i++) {
-						// find channelID's for subreddit and post
-						for (let z = 0; z < subreddit.length; z++) {
-							if (subreddit[z].subredditName == res[i].sub.name) {
-								for (let y = 0; y < subreddit[z].channelIDs.length; y++) {
-									const channel = bot.channels.cache.get(subreddit[z].channelIDs[y]);
-									if (channel) {
-										const embed = new MessageEmbed()
-											.setTitle(res[i].title)
-											.setImage(res[i].url)
-											.setFooter(`u/${res[i].author.name} | r/${res[i].sub.name}`)
-											.setURL(res[i].permalink)
-											.setTimestamp()
-											.setColor('RANDOM');
-										bot.addEmbed(channel.id, embed);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		});
-	}, 60000);
-};
+module.exports = RedditFetcher;
