@@ -1,0 +1,26 @@
+<h1>Reddit</h1>
+<% for (const r of reddit) { %>
+  <p><%= r.channel.join(', ')%></p>
+  <p><%= r.subreddit %></p>
+<% } %>
+
+<h1>Twitter</h1>
+<% for (const r of twitter) { %>
+  <p><%= r.channel.join(', ') %></p>
+  <p><%= r.Twitter %></p>
+<% } %>
+
+<form class="/" method="post">
+  <label for="fname">Channel name</label>
+  <input type="text" id="fname" name="channel"><br><br>
+  <label for="lname">Account ID</label>
+  <input type="text" id="lname" name="account_ID"><br><br>
+  <label for="service">Choose a service:</label>
+  <select name="Service" id="service">
+    <option value="Reddit">Reddit</option>
+    <option value="Twitter">Twitter</option>
+    <option value="Youtube">Youtube</option>
+    <option value="Tiktok">Tiktok</option>
+  </select>
+  <button type="submit" value="Submit">Submit</button>
+</form>
