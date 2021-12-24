@@ -4,8 +4,7 @@ module.exports.functiondate = () => {
 	const year = datefu.getFullYear();
 	const month = months[datefu.getMonth()];
 	const getdate = datefu.getDate();
-	const date = getdate + ' ' + month + ' ' + year;
-	return date;
+	return getdate + ' ' + month + ' ' + year;
 };
 
 module.exports.functiontime = () => {
@@ -13,6 +12,5 @@ module.exports.functiontime = () => {
 	const hour = datefu.getHours();
 	const min = datefu.getMinutes();
 	const sec = datefu.getSeconds();
-	const time = hour + ':' + min + ':' + sec;
-	return time;
+	return hour + ':' + min + ':' + sec;
 };

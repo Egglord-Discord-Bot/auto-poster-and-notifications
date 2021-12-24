@@ -20,7 +20,6 @@ class RedditFetcher {
 					for (const { data } of resp.data.children.reverse()) {
 						if (date <= data.created_utc) {
 							if (debug) this.bot.logger.debug(`Recieved new ${data.subreddit} post: ${data.title}.`);
-							if (data.media) console.log(data.media);
 							const Post = new RedditPost(data);
 							const embed = new MessageEmbed()
 								.setTitle(`New post from r/${Post.subreddit}`)

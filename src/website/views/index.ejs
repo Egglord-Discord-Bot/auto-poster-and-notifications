@@ -10,6 +10,12 @@
   <p><%= r.Twitter %></p>
 <% } %>
 
+<h1>Youtube</h1>
+<% for (const r of youtube) { %>
+  <p><%= r.channel.join(', ') %></p>
+  <p><%= r.Twitter %></p>
+<% } %>
+
 <form class="/" method="post">
   <label for="fname">Channel name</label>
   <input type="text" id="fname" name="channel"><br><br>

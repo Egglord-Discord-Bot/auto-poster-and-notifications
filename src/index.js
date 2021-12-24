@@ -27,7 +27,7 @@ bot.on('ready', async () => {
 		require('./website');
 		await new (require('./services/Reddit'))(bot).init();
 		await new (require('./services/Twitter'))(bot).init();
-		require('./services/Youtube')(bot);
+		await new (require('./services/Youtube'))(bot).init();
 	} catch (err) {
 		console.log(err);
 	}
