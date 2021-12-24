@@ -1,33 +1,33 @@
-const { MessageEmbed } = require('discord.js'),
-	{ RedditSchema } = require('../database/models'),
+const	{ RedditSchema } = require('../database/models'),
+	{ MessageEmbed } = require('discord.js'),
 	fetch = require('node-fetch');
 
 let date = Math.floor(Date.now() / 1000);
 class RedditFetcher {
 	constructor(bot) {
 		this.bot = bot;
-		this.subreddits;
+		this.subreddits = [];
 	}
 
+	// Fetch new posts (every 1 minute)
 	async fetchPosts() {
 		setInterval(async () => {
-			this.subreddits.forEach(async sub => {
-				console.log(sub);
-				if (sub) {
-					const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
-					if (resp.data?.children) {
-						for (const post of resp.data.children.reverse()) {
-							console.log(date);
-							console.log(post.data.created_utc);
-							console.log(date <= post.data.created_utc);
-							if (date <= post.data.created_utc) {
-								const t = new RedditPost(post);
-								console.log(t);
-							}
+			for (const { subredditName: sub, channelIDs } of this.subreddits) {
+				const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
+				if (resp.data?.children) {
+					for (const post of resp.data.children.reverse()) {
+						if (date <= post.data.created_utc) {
+							const Post = new RedditPost(post.data);
+							const embed = new MessageEmbed()
+								.setTitle(`From /${Post.subreddit}`)
+								.setURL(Post.link)
+								.setImage(Post.imageURL)
+								.setFooter(`👍 ${Post.upvotes}   👎 ${Post.downvotes}`);
+							channelIDs.forEach((id) => { this.bot.addEmbed(id, embed);});
 						}
 					}
 				}
-			});
+			}
 			date = Math.floor(Date.now() / 1000);
 		}, 60000);
 	}
@@ -35,29 +35,27 @@ class RedditFetcher {
 	// Updates subreddit list every 5 minutes
 	async updateSubredditList() {
 		// fetch reddit data from database
-		const subreddit = await RedditSchema.find({});
-		if (!subreddit[0]) return this.bot.logger.error('No subreddits to load.');
+		const subreddits = await RedditSchema.find({});
+		if (!subreddits[0]) return this.bot.logger.error('Reddit: No subreddits to load.');
 
-		const subreddits = [];
-		for (let i = 0; i < subreddit.length; i++) {
-			if (subreddit[i].channelIDs.length >= 1) {
-				subreddits.push(subreddit[i].subredditName);
+		for (const subreddit of subreddits) {
+			if (subreddit.channelIDs.length >= 1) {
+				this.bot.logger.log(`Reddit: Added ${subreddit.subredditName} to the watch list.`);
+				this.subreddits.push(subreddit);
 			} else {
-				// delete from DB
-				await RedditSchema.findOneAndRemove({ subredditName: subreddit[i].subredditName }, (err) => {
+				await RedditSchema.findOneAndRemove({ subredditName: subreddit.subredditName }, (err) => {
 					if (err) console.log(err);
 				});
 			}
 		}
-		this.subreddits = subreddits;
 	}
 
 	// init the class
 	async init() {
+		this.bot.logger.log('Reddit: Loading module...');
 		await this.updateSubredditList();
-		await new Promise(res => setTimeout(res, 60 * 1000));
 		await this.fetchPosts();
-
+		this.bot.logger.ready('Reddit: Loaded module.');
 		// Update subreddit list every 5 minutes
 		setInterval(async () => {
 			await this.updateSubredditList();
@@ -70,7 +68,7 @@ class RedditPost {
 		this.title = title;
 		this.subreddit = subreddit;
 		this.link = `https://www.reddit.com${permalink}`;
-		this.imageURL = media ? media.oembed.thumbnail_url : url;
+		this.imageURL = media ? (media.oembed?.thumbnail_url ?? media.reddit_video.fallback_url) : url;
 		this.upvotes = ups ?? 0;
 		this.downvotes = downs ?? 0;
 		this.author = author;
