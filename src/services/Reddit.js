@@ -1,8 +1,10 @@
 const	{ RedditSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
+	{ debug } = require('../config'),
 	fetch = require('node-fetch');
-
 let date = Math.floor(Date.now() / 1000);
+
+// Fetch reddit post
 class RedditFetcher {
 	constructor(bot) {
 		this.bot = bot;
@@ -15,14 +17,16 @@ class RedditFetcher {
 			for (const { subredditName: sub, channelIDs } of this.subreddits) {
 				const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
 				if (resp.data?.children) {
-					for (const post of resp.data.children.reverse()) {
-						if (date <= post.data.created_utc) {
-							const Post = new RedditPost(post.data);
+					for (const { data } of resp.data.children.reverse()) {
+						if (date <= data.created_utc) {
+							if (debug) this.bot.logger.debug(`Recieved new ${data.subreddit} post: ${data.title}.`);
+							if (data.media) console.log(data.media);
+							const Post = new RedditPost(data);
 							const embed = new MessageEmbed()
-								.setTitle(`From /${Post.subreddit}`)
+								.setTitle(`New post from r/${Post.subreddit}`)
 								.setURL(Post.link)
-								.setImage(Post.imageURL)
-								.setFooter(`👍 ${Post.upvotes}   👎 ${Post.downvotes}`);
+								.setImage(Post.imageURL);
+							if (Post.text) embed.setDescription(Post.text);
 							channelIDs.forEach((id) => { this.bot.addEmbed(id, embed);});
 						}
 					}
@@ -38,6 +42,7 @@ class RedditFetcher {
 		const subreddits = await RedditSchema.find({});
 		if (!subreddits[0]) return this.bot.logger.error('Reddit: No subreddits to load.');
 
+		this.subreddits = [];
 		for (const subreddit of subreddits) {
 			if (subreddit.channelIDs.length >= 1) {
 				this.bot.logger.log(`Reddit: Added ${subreddit.subredditName} to the watch list.`);
@@ -64,15 +69,13 @@ class RedditFetcher {
 }
 
 class RedditPost {
-	constructor({ title, subreddit, permalink, url, ups, downs, author, num_comments, over_18, media }) {
+	constructor({ title, subreddit, permalink, url, author, over_18, media, selftext }) {
 		this.title = title;
 		this.subreddit = subreddit;
 		this.link = `https://www.reddit.com${permalink}`;
 		this.imageURL = media ? (media.oembed?.thumbnail_url ?? media.reddit_video.fallback_url) : url;
-		this.upvotes = ups ?? 0;
-		this.downvotes = downs ?? 0;
+		this.text = selftext ?? null;
 		this.author = author;
-		this.comments = num_comments ?? 0;
 		this.nsfw = over_18;
 	}
 }
