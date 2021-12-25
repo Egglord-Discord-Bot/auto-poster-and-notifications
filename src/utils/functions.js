@@ -1,16 +1,16 @@
-module.exports.functiondate = () => {
-	const datefu = new Date();
-	const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-	const year = datefu.getFullYear();
-	const month = months[datefu.getMonth()];
-	const getdate = datefu.getDate();
-	return getdate + ' ' + month + ' ' + year;
+module.exports.getdate = () => {
+	const date = new Date(),
+		months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+		year = date.getFullYear(),
+		month = months[date.getMonth()],
+		getdate = date.getDate();
+	return `${getdate} ${month} ${year}`;
 };
 
-module.exports.functiontime = () => {
-	const datefu = new Date();
-	const hour = datefu.getHours();
-	const min = datefu.getMinutes();
-	const sec = datefu.getSeconds();
-	return hour + ':' + min + ':' + sec;
+module.exports.gettime = () => {
+	const date = new Date(),
+		hour = date.getHours(),
+		min = date.getMinutes(),
+		sec = date.getSeconds();
+	return `${hour}:${min}:${sec}`;
 };

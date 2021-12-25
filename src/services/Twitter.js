@@ -1,7 +1,7 @@
 const { TwitterSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
 	Twitter = require('twitter-lite'),
-	{ functiondate, functiontime } = require('../utils/functions');
+	{ getdate, getTime } = require('../utils/functions');
 
 // Fetch new twitter posts
 class TwitterFetcher {
@@ -81,12 +81,12 @@ class TwitterFetcher {
 
 		// An error occured on the stream
 		Tstream.on('error', function(err) {
-			console.log(`[${functiondate()} - ${functiontime()} ] globaltwit stream error:`);
+			console.log(`[${getdate()} - ${getTime()} ] globaltwit stream error:`);
 			console.log(err);
 		});
 
 		Tstream.on('stall_warnings', function(stall) {
-			console.log(`[${functiondate()} - ${functiontime()} ] ${stall.warning.message} - ` + stall.warning.code);
+			console.log(`[${getdate()} - ${getTime()} ] ${stall.warning.message} - ` + stall.warning.code);
 		});
 
 		// Destory the stream at 4.5 minutes to allow for new stream (Updated twitter list)
