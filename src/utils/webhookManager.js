@@ -15,43 +15,43 @@ class WebhookManager {
 	}
 
 	async init() {
-		// get list of channel ID's
-		const channelIDs = Array.from(this.messages.keys());
+		setInterval(async () => {
+			// get list of channel ID's
+			const channelIDs = Array.from(this.messages.keys());
+			// loop through each channel ID sending their embeds
+			for (const ID of channelIDs) {
+				try {
+					const channel = await this.client.channels.fetch(ID);
+					const webhooks = await channel.fetchWebhooks();
+					let webhook = webhooks.find(wh => wh.name == this.client.user.username);
 
-		// loop through each channel ID sending their embeds
-		for (const ID of channelIDs) {
-			try {
-				const channel = await this.client.channels.fetch(ID);
-				const webhooks = channel.then(c => c.fetchWebhooks());
-				let webhook = webhooks.find(wh => wh.name == this.client.user.username);
+					// create webhook if it doesn't exist
+					if (!webhook) webhook = await channel.createWebhook(this.client.user.username);
 
-				// create webhook if it doesn't exist
-				if (!webhook) webhook = channel.then(c => c.createWebhook(this.client.user.username));
+					// send the embeds
+					const repeats = Math.ceil(this.messages.get(ID).length / 10);
+					for (let j = 0; j < repeats; j++) {
+						// Get the embeds
+						const embeds = this.messages.get(ID)?.slice(j * 10, (j * 10) + 10);
+						if (!embeds) return;
 
-				// send the embeds
-				const repeats = Math.ceil(this.messages.get(ID).length / 10);
-				for (let j = 0; j < repeats; j++) {
-					// Get the embeds
-					const embeds = this.messages.get(ID)?.slice(j * 10, (j * 10) + 10);
-					if (!embeds) return;
+						await webhook.send({
+							username: this.client.user.name,
+							avatarURL: this.client.user.displayAvatarURL({ format: 'png', size: 1024 }),
+							// make sure only 10 embeds are sent
+							embeds: embeds,
+						});
+					}
 
-					await webhook.send({
-						username: this.client.user.name,
-						avatarURL: this.client.user.displayAvatarURL({ format: 'png', size: 1024 }),
-						// make sure only 10 embeds are sent
-						embeds: embeds,
-					});
+					// delete from collection once sent
+					this.messages.delete(ID);
+				} catch (err) {
+					// It was likely they didn't have permission to create/send the webhook
+					console.log(err);
+					this.messages.delete(ID);
 				}
-
-				// delete from collection once sent
-				this.messages.delete(ID);
-			} catch (err) {
-				// It was likely they didn't have permission to create/send the webhook
-				this.client.logger.error(err.message);
-				this.messages.delete(ID);
 			}
-		}
-
+		}, 10000);
 	}
 
 	/**

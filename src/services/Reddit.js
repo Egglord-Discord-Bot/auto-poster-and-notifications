@@ -26,7 +26,7 @@ class RedditFetcher {
 								.setURL(Post.link)
 								.setImage(Post.imageURL);
 							if (Post.text) embed.setDescription(Post.text);
-							channelIDs.forEach((id) => { this.AutoPoster.webhookManager.addValues(id, embed);});
+							channelIDs.forEach((id) => {this.AutoPoster.webhookManager.addValues(id, embed);});
 						}
 					}
 				}
@@ -38,14 +38,18 @@ class RedditFetcher {
 	// Updates subreddit list every 5 minutes
 	async updateSubredditList() {
 		// fetch reddit data from database
-		const data = await AutoPosterSchema.find({});
-		if (!data[0]) return this.enabled = false;
+		const redditData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Reddit));
+		if (!redditData[0]) return this.enabled = false;
 
 		// Get all subreddits (remove duplicates)
-		const subreddits = [...new Set(data.map(item => item.Reddit.Account))];
+		const subreddits = [...new Set(redditData.map(item => item.map(obj => obj.Account)).reduce((a, b) => a.concat(b)))];
 
 		// Put subreddits with their list of channels to post to
-		this.subreddits = subreddits.map(sub => ({ subredditName: sub, channelIDs: data.filter(({ Reddit }) => Reddit.channelID === sub) }));
+		this.subreddits = subreddits.map(sub => ({
+			subredditName: sub,
+			channelIDs: [...new Set(redditData.map(item => item.filter(obj => obj.Account == 'dankmemes')).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
+		}));
+
 	}
 
 	// init the class
@@ -73,13 +77,19 @@ class RedditFetcher {
 	 * @return {Mongoose.Schema}
 	*/
 	async addItem({ channelID, accountName }) {
-		const channel = this.AutoPoster.client.channels.get(channelID);
+		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
-		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
-		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);
+		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
 
-		// Add new item to Guild's autoposter data
-		data.Reddit.push({ channelID: channel.id, Account: accountName });
+		if (data) {
+			// Add new item to Guild's autoposter data
+			data.Reddit.push({ channelID: channel.id, Account: accountName });
+		} else {
+			data = new AutoPosterSchema({
+				guildID: `${channel.guild.id}`,
+				Reddit: [{ channelID: channel.id, Account: accountName }],
+			});
+		}
 		return data.save();
 	}
 
@@ -90,7 +100,7 @@ class RedditFetcher {
 	 * @return {Mongoose.Schema}
 	*/
 	async deleteItem({ channelID, accountName }) {
-		const channel = this.AutoPoster.client.channels.get(channelID);
+		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
 		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);

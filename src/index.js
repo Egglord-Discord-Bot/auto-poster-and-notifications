@@ -16,7 +16,12 @@ class AutoPoster {
       * The webhook manager
       * @type {WebhookManager}
     */
-		this.webhookManager = require('./utils/webhookManager');
+		this.webhookManager = new (require('./utils/webhookManager'))(client);
+		/**
+			* The Autposter options
+			* @type {Options}
+		*/
+		this.options = options;
 		/**
 			* The services
 			* @type {ServiceManager}
@@ -27,8 +32,12 @@ class AutoPoster {
 		if (this.options?.Twitter.enabled) this.Twitter = new Twitter(this);
 		if (this.options?.Youtube.enabled) this.Youtube = new Youtube(this);
 
-		this.options = options;
-		if (this.ready) this.init();
+		if (this.options.mongoDBURL) this.mongoose = require('./database').init(this);
+
+		if (this.ready) {
+			this.init();
+			this.webhookManager.init();
+		}
 	}
 
 	async init() {
@@ -38,6 +47,7 @@ class AutoPoster {
 			await this.Twitch?.init(),
 			await this.Twitter?.init(),
 			await this.Youtube?.init(),
+			this.webhookManager.init(),
 		]);
 	}
 }
