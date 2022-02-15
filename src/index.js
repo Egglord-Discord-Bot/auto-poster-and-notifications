@@ -1,43 +1,45 @@
-const { Client, Collection } = require('discord.js'),
-	bot = new Client();
+const { Instagram, Reddit, Twitch, Twitter, Youtube } = require('./services');
 
-bot.logger = require('./utils/logger');
-bot.config = require('./config');
-// for webhook
-bot.embedCollection = new Collection();
-bot.addEmbed = function(channelID, embed) {
-	// collect embeds
-	if (!this.embedCollection.has(channelID)) {
-		this.embedCollection.set(channelID, [embed]);
-	} else {
-		this.embedCollection.set(channelID, [...this.embedCollection.get(channelID), embed]);
+class AutoPoster {
+	constructor(client, options) {
+		/**
+      * The Discord Client
+      * @type {Discord.Client}
+    */
+		this.client = client;
+		/**
+      * Whether the manager is ready
+      * @type {Boolean}
+    */
+		this.ready = false;
+		/**
+      * The webhook manager
+      * @type {WebhookManager}
+    */
+		this.webhookManager = require('./utils/webhook-manager');
+		/**
+			* The services
+			* @type {ServiceManager}
+		*/
+		if (this.options?.Instagram) this.Instagram = new Instagram(this);
+		if (this.options?.Reddit) this.Reddit = new Reddit(this);
+		if (this.options?.Twitch) this.Twitch = new Twitch(this);
+		if (this.options?.Twitter) this.Twitter = new Twitter(this);
+		if (this.options?.Youtube) this.Youtube = new Youtube(this);
+
+		this.options = options;
+		if (this.ready) this.init();
 	}
-};
-// Connect bot to database
-bot.mongoose = require('./database').init(bot);
 
-// ready event
-bot.on('ready', async () => {
-	bot.logger.log('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=', 'ready');
-	bot.logger.log(`${bot.user.tag}, ready to serve [${bot.users.cache.size}] users in [${bot.guilds.cache.size}] servers.`, 'ready');
-	bot.logger.log('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=', 'ready');
-
-	// Load all services
-	try {
-		require('./website');
-		await new (require('./services/Reddit'))(bot).init();
-		await new (require('./services/Twitter'))(bot).init();
-		await new (require('./services/Youtube'))(bot).init();
-	} catch (err) {
-		console.log(err);
+	async init() {
+		await Promise.all([
+			await this.Instagram?.init(),
+			await this.Reddit?.init(),
+			await this.Twitch?.init(),
+			await this.Twitter?.init(),
+			await this.Youtube?.init(),
+		]);
 	}
+}
 
-	// webhook manager
-	setInterval(async () => {
-		await require('./utils/webhook-manager')(bot);
-	}, 10000);
-});
-
-// Login to discord client (KEEP AT BOTTOM)
-const token = bot.config.token;
-bot.login(token).catch(e => console.error(e.message));
+module.exports = AutoPoster;

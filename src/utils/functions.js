@@ -8,9 +8,6 @@ module.exports.getdate = () => {
 };
 
 module.exports.gettime = () => {
-	const date = new Date(),
-		hour = date.getHours(),
-		min = date.getMinutes(),
-		sec = date.getSeconds();
-	return `${hour}:${min}:${sec}`;
+	const date = new Date();
+	return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 };
