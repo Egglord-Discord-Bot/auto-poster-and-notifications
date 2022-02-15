@@ -2,15 +2,53 @@ const	{ AutoPosterSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
 	{ debug } = require('../config'),
 	fetch = require('node-fetch');
-const date = Math.floor(Date.now() / 1000);
+let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
 class RedditFetcher {
 	constructor(AutoPoster) {
 		this.AutoPoster = AutoPoster;
 		this.subreddits = [];
+		this.enabled = true;
 	}
 
+	// Fetch new posts (every 1 minute)
+	async fetchPosts() {
+		setInterval(async () => {
+			if (!this.enabled) return;
+			for (const { subredditName: sub, channelIDs } of this.subreddits) {
+				const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
+				if (resp.data?.children) {
+					for (const { data } of resp.data.children.reverse()) {
+						if (date <= data.created_utc) {
+							if (debug) this.bot.logger.debug(`Recieved new ${data.subreddit} post: ${data.title}.`);
+							const Post = new RedditPost(data);
+							const embed = new MessageEmbed()
+								.setTitle(`New post from r/${Post.subreddit}`)
+								.setURL(Post.link)
+								.setImage(Post.imageURL);
+							if (Post.text) embed.setDescription(Post.text);
+							channelIDs.forEach((id) => { this.bot.addEmbed(id, embed);});
+						}
+					}
+				}
+			}
+			date = Math.floor(Date.now() / 1000);
+		}, 60000);
+	}
+
+	// Updates subreddit list every 5 minutes
+	async updateSubredditList() {
+		// fetch reddit data from database
+		const data = await AutoPosterSchema.find({});
+		if (!data[0]) throw new Error('No autoposter data found yet!');
+
+		// Get all subreddits (remove duplicates)
+		const subreddits = [...new Set(data.map(item => item.Reddit.Account))];
+
+		// Put subreddits with their list of channels to post to
+		this.subreddits = subreddits.map(sub => ({ subredditName: sub, channelIDs: data.filter(({ Reddit }) => Reddit.channelID === sub) }));
+	}
 
 	// init the class
 	async init() {
@@ -22,12 +60,38 @@ class RedditFetcher {
 		}, 5 * 60000);
 	}
 
-	async addItem(item) {
-		const channel = this.AutoPoster.client.channels.get(item.channelID);
+	/**
+	 * Function for adding a subreddit via channel or subreddit name
+	 * @param {obj.channelID} String The channel where it's being added to
+	 * @param {obj.accountName} String The subreddit that is being added
+	 * @return {Mongoose.Schema}
+	*/
+	async addItem({ channelID, accountName }) {
+		const channel = this.AutoPoster.client.channels.get(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
-		const data = await AutoPosterSchema.findOne({ guildID: item.guild.id });
-		data.Reddit.push({ channelID: channel.id, Account: item.accountName });
-		await data.save();
+		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
+		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);
+
+		// Add new item to Guild's autoposter data
+		data.Reddit.push({ channelID: channel.id, Account: accountName });
+		return data.save();
+	}
+
+	/**
+	 * Function for removing a subreddit via channel or subreddit name
+	 * @param {obj.channelID} String The channel where it's being deleted from
+	 * @param {obj.accountName} String The subreddit that is being deleted
+	 * @return {Mongoose.Schema}
+	*/
+	async deleteItem({ channelID, accountName }) {
+		const channel = this.AutoPoster.client.channels.get(channelID);
+		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
+		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
+		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);
+
+		// Delete channel or Account
+		data.Reddit.filter(({ Account }) => Account !== accountName);
+		return data.save();
 	}
 }
 
