@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 module.exports = {
-	init: (bot) => {
+	init: (AutoPoster) => {
 		const dbOptions = {
 			useNewUrlParser: true,
 			autoIndex: false,
@@ -10,17 +10,17 @@ module.exports = {
 			family: 4,
 			useUnifiedTopology: true,
 		};
-		mongoose.connect(bot.config.MongoDBURl, dbOptions);
+		mongoose.connect(AutoPoster.options.MongoDBURl, dbOptions);
 		mongoose.set('useFindAndModify', false);
 		mongoose.Promise = global.Promise;
 		mongoose.connection.on('connected', () => {
-			bot.logger.log('Mongoose connection successfully opened', 'ready');
+			console.log('Mongoose connection successfully opened', 'ready');
 		});
 		mongoose.connection.on('err', (err) => {
-			bot.logger.error(`Mongoose connection error: \n ${err.stack}`);
+			console.log(`Mongoose connection error: \n ${err.stack}`);
 		});
 		mongoose.connection.on('disconnected', () => {
-			bot.logger.error('Mongoose disconnected');
+			console.log('Mongoose disconnected');
 		});
 	},
 };

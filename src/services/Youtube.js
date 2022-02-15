@@ -1,24 +1,24 @@
-const	{ YoutubeSchema } = require('../database/models'),
+const	{ AutoPosterSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
-	{ debug } = require('../config'),
 	parser = new (require('rss-parser'))();
 let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
 class VideoFetcher {
-	constructor(bot) {
-		this.bot = bot;
+	constructor(AutoPoster) {
+		this.AutoPoster = AutoPoster;
 		this.channels = [];
+		this.enabled = true;
 	}
 
 	// Fetch new posts (every 1 minute)
 	async fetchVideos() {
 		setInterval(async () => {
+			if (!this.enabled) return;
 			for (const { channel, channelIDs } of this.channels) {
 				const { items: videos, title, link, pubDate } = await parser.parseURL(`https://www.youtube.com/feeds/videos.xml?channel_id=${channel}`);
 				for (const video of videos) {
 					if (date <= pubDate) {
-						if (debug) this.bot.logger.debug(`${title} just uploaded a new video: ${video.title}.`);
 						const embed = new MessageEmbed()
 							.setColor('RED')
 							.setTitle(video.title)
@@ -38,32 +38,75 @@ class VideoFetcher {
 	// Updates subreddit list every 5 minutes
 	async updateChannelsList() {
 		// fetch reddit data from database
-		const channels = await YoutubeSchema.find({});
-		if (!channels[0]) return this.bot.logger.error('Youtube: No channels to load.');
+		const youtubeData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Youtube));
+		if (!youtubeData[0]) return this.enabled = false;
 
-		this.channels = [];
-		for (const { channel, channelIDs } of channels) {
-			if (channelIDs.length >= 1) {
-				this.bot.logger.log(`Youtube: Added ${channel} to the watch list.`);
-				this.channels.push({ channel, channelIDs });
-			} else {
-				await YoutubeSchema.findOneAndRemove({ channel: channel }, (err) => {
-					if (err) console.log(err);
-				});
-			}
-		}
+		// Get all subreddits (remove duplicates)
+		const ytaccounts = [...new Set(youtubeData.map(item => item.map(obj => obj.Account)).reduce((a, b) => a.concat(b)))];
+
+		// Put subreddits with their list of channels to post to
+		this.channels = ytaccounts.map(acc => ({
+			channel: acc,
+			channelIDs: [...new Set(youtubeData.map(item => item.filter(obj => obj.Account == acc)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
+		}));
 	}
 
 	// init the class
 	async init() {
-		this.bot.logger.log('Youtube: Loading module...');
 		await this.updateChannelsList();
 		await this.fetchVideos();
-		this.bot.logger.ready('Youtube: Loaded module.');
 		// Update subreddit list every 5 minutes
 		setInterval(async () => {
 			await this.updateChannelsList();
 		}, 5 * 60000);
+	}
+
+	/**
+    * Function for toggling the Youtube auto-poster
+    * @return {Void}
+  */
+	toggle() {
+		this.enabled = !this.enabled;
+	}
+
+	/**
+   * Function for adding a Youtube account
+   * @param {obj.channelID} String The channel where it's being added to
+   * @param {obj.accountName} String The Youtube account that is being added
+   * @return {Mongoose.Schema}
+  */
+	async addItem({ channelID, accountName }) {
+		const channel = this.AutoPoster.client.channels.get(channelID);
+		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
+		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
+
+		if (data) {
+			// Add new item to Guild's autoposter data
+			data.Youtube.push({ channelID: channel.id, Account: accountName });
+		} else {
+			data = new AutoPosterSchema({
+				guildID: `${channel.guild.id}`,
+				Youtube: [{ channelID: channel.id, Account: accountName }],
+			});
+		}
+		return data.save();
+	}
+
+	/**
+   * Function for removing a Youtube account
+   * @param {obj.channelID} String The channel where it's being deleted from
+   * @param {obj.accountName} String The Youtube account that is being deleted
+   * @return {Mongoose.Schema}
+  */
+	async deleteItem({ channelID, accountName }) {
+		const channel = this.AutoPoster.client.channels.get(channelID);
+		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
+		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
+		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);
+
+		// Delete channel or Account
+		data.Youtube.filter(({ Account }) => Account !== accountName);
+		return data.save();
 	}
 }
 
