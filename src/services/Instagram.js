@@ -1,6 +1,5 @@
 const	{ AutoPosterSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
-	{ debug } = require('../config'),
 	fetch = require('node-fetch');
 let date = Math.floor(Date.now() / 1000);
 
@@ -21,7 +20,6 @@ class InstagramFetcher {
 				if (photos.edges.length >= 1) {
 					for (const { node } of photos.edges) {
 						if (date <= (node.taken_at_timestamp)) {
-							if (debug) this.bot.logger.debug(`${node.owner.username} uploaded a new post.`);
 							const embed = new MessageEmbed()
 								.setTitle(`New post by ${node.owner.username}`)
 								.setURL(`https://www.instagram.com/p/${node.shortcode}`)
@@ -33,7 +31,7 @@ class InstagramFetcher {
 				}
 			}
 			date = Math.floor(Date.now() / 1000);
-		}, 5000);
+		}, 60000);
 	}
 
 	// Updates subreddit list every 5 minutes
@@ -43,12 +41,12 @@ class InstagramFetcher {
 		if (!instaData[0]) return this.enabled = false;
 
 		// Get all subreddits (remove duplicates)
-		const instaAccount = [...new Set(instaData.map(item => item.map(obj => obj.Account)).reduce((a, b) => a.concat(b)))];
+		const instaAcc = [...new Set(instaData.map(item => item.map(obj => obj.Account)).reduce((a, b) => a.concat(b)))];
 
 		// Put subreddits with their list of channels to post to
-		this.accounts = instaAccount.map(acc => ({
-			name: acc,
-			channelIDs: [...new Set(instaData.map(item => item.filter(obj => obj.Account == acc)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
+		this.accounts = instaAcc.map(name => ({
+			name: name,
+			channelIDs: [...new Set(instaData.map(item => item.filter(obj => obj.Account == name)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
 		}));
 	}
 
