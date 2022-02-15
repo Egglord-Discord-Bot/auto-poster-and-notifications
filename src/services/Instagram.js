@@ -77,7 +77,7 @@ class InstagramFetcher {
    * @return {Mongoose.Schema}
   */
 	async addItem({ channelID, accountName }) {
-		const channel = this.AutoPoster.client.channels.get(channelID);
+		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
 
@@ -100,7 +100,7 @@ class InstagramFetcher {
    * @return {Mongoose.Schema}
   */
 	async deleteItem({ channelID, accountName }) {
-		const channel = this.AutoPoster.client.channels.get(channelID);
+		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
 		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);
