@@ -16,16 +16,16 @@ class AutoPoster {
       * The webhook manager
       * @type {WebhookManager}
     */
-		this.webhookManager = require('./utils/webhook-manager');
+		this.webhookManager = require('./utils/webhookManager');
 		/**
 			* The services
 			* @type {ServiceManager}
 		*/
-		if (this.options?.Instagram) this.Instagram = new Instagram(this);
-		if (this.options?.Reddit) this.Reddit = new Reddit(this);
-		if (this.options?.Twitch) this.Twitch = new Twitch(this);
-		if (this.options?.Twitter) this.Twitter = new Twitter(this);
-		if (this.options?.Youtube) this.Youtube = new Youtube(this);
+		if (this.options?.Instagram.enabled) this.Instagram = new Instagram(this);
+		if (this.options?.Reddit.enabled) this.Reddit = new Reddit(this);
+		if (this.options?.Twitch.enabled && this.options.Twitch.clientID && this.options.Twitch.clientSecret) this.Twitch = new Twitch(this);
+		if (this.options?.Twitter.enabled) this.Twitter = new Twitter(this);
+		if (this.options?.Youtube.enabled) this.Youtube = new Youtube(this);
 
 		this.options = options;
 		if (this.ready) this.init();

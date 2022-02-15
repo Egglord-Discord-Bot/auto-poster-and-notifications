@@ -1,6 +1,5 @@
 const	{ AutoPosterSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
-	{ debug } = require('../config'),
 	fetch = require('node-fetch');
 let date = Math.floor(Date.now() / 1000);
 
@@ -21,14 +20,13 @@ class RedditFetcher {
 				if (resp.data?.children) {
 					for (const { data } of resp.data.children.reverse()) {
 						if (date <= data.created_utc) {
-							if (debug) this.bot.logger.debug(`Recieved new ${data.subreddit} post: ${data.title}.`);
 							const Post = new RedditPost(data);
 							const embed = new MessageEmbed()
 								.setTitle(`New post from r/${Post.subreddit}`)
 								.setURL(Post.link)
 								.setImage(Post.imageURL);
 							if (Post.text) embed.setDescription(Post.text);
-							channelIDs.forEach((id) => { this.bot.addEmbed(id, embed);});
+							channelIDs.forEach((id) => { this.AutoPoster.webhookManager.addValues(id, embed);});
 						}
 					}
 				}
@@ -41,7 +39,7 @@ class RedditFetcher {
 	async updateSubredditList() {
 		// fetch reddit data from database
 		const data = await AutoPosterSchema.find({});
-		if (!data[0]) throw new Error('No autoposter data found yet!');
+		if (!data[0]) return this.enabled = false;
 
 		// Get all subreddits (remove duplicates)
 		const subreddits = [...new Set(data.map(item => item.Reddit.Account))];
@@ -61,7 +59,15 @@ class RedditFetcher {
 	}
 
 	/**
-	 * Function for adding a subreddit via channel or subreddit name
+	 * Function for toggling the Reddit auto-poster
+	 * @return {Void}
+	*/
+	toggle() {
+		this.enabled = !this.enabled;
+	}
+
+	/**
+	 * Function for adding a subreddit
 	 * @param {obj.channelID} String The channel where it's being added to
 	 * @param {obj.accountName} String The subreddit that is being added
 	 * @return {Mongoose.Schema}
@@ -78,7 +84,7 @@ class RedditFetcher {
 	}
 
 	/**
-	 * Function for removing a subreddit via channel or subreddit name
+	 * Function for removing a subreddit
 	 * @param {obj.channelID} String The channel where it's being deleted from
 	 * @param {obj.accountName} String The subreddit that is being deleted
 	 * @return {Mongoose.Schema}
