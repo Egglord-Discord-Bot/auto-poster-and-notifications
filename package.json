@@ -6,8 +6,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["discord.js", "Twitch", "Instagram", "Youtube", "Twitter", "Reddit"],
+  "files": [
+    "src"
+  ],
+  "author": "I am Ben#6686",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Egglord-Discord-Bot/auto-poster-and-notifications.git"
+  },
   "license": "ISC",
   "dependencies": {
     "axios": "^0.25.0",
