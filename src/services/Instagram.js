@@ -39,14 +39,17 @@ class InstagramFetcher {
 	// Updates subreddit list every 5 minutes
 	async updateInstagramList() {
 		// fetch reddit data from database
-		const data = await AutoPosterSchema.find({});
-		if (!data[0]) return this.enabled = false;
+		const instaData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Instagram));
+		if (!instaData[0]) return this.enabled = false;
 
 		// Get all subreddits (remove duplicates)
-		const instaAccounts = [...new Set(data.map(item => item.Instagram.Account))];
+		const instaAccount = [...new Set(instaData.map(item => item.map(obj => obj.Account)).reduce((a, b) => a.concat(b)))];
 
 		// Put subreddits with their list of channels to post to
-		this.accounts = instaAccounts.map(sub => ({ name: sub, channelIDs: data.filter(({ Instagram }) => Instagram.channelID === sub) }));
+		this.accounts = instaAccount.map(acc => ({
+			name: acc,
+			channelIDs: [...new Set(instaData.map(item => item.filter(obj => obj.Account == acc)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
+		}));
 	}
 
 	// init the class
@@ -76,11 +79,17 @@ class InstagramFetcher {
 	async addItem({ channelID, accountName }) {
 		const channel = this.AutoPoster.client.channels.get(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
-		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
-		if (!data) throw new Error(`No data found from guild: ${channel.guild.id}`);
+		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
 
-		// Add new item to Guild's autoposter data
-		data.Instagram.push({ channelID: channel.id, Account: accountName });
+		if (data) {
+			// Add new item to Guild's autoposter data
+			data.Instagram.push({ channelID: channel.id, Account: accountName });
+		} else {
+			data = new AutoPosterSchema({
+				guildID: `${channel.guild.id}`,
+				Instagram: [{ channelID: channel.id, Account: accountName }],
+			});
+		}
 		return data.save();
 	}
 

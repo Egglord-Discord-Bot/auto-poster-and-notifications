@@ -47,9 +47,8 @@ class RedditFetcher {
 		// Put subreddits with their list of channels to post to
 		this.subreddits = subreddits.map(sub => ({
 			subredditName: sub,
-			channelIDs: [...new Set(redditData.map(item => item.filter(obj => obj.Account == 'dankmemes')).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
+			channelIDs: [...new Set(redditData.map(item => item.filter(obj => obj.Account == sub)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
 		}));
-
 	}
 
 	// init the class
