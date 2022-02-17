@@ -122,4 +122,4 @@ class RedditPost {
 	}
 }
 
-module.exports = RedditFetcher;
+export default RedditFetcher;

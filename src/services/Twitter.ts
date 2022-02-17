@@ -178,4 +178,4 @@ class TwitterFetcher {
 	}
 }
 
-module.exports = TwitterFetcher;
+export default TwitterFetcher;

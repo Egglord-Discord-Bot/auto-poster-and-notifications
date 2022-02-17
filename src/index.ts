@@ -1,7 +1,18 @@
-const { Instagram, Reddit, Twitch, Twitter, Youtube } = require('./services');
+import Instagram, Reddit, Twitch, Twitter, Youtube from "./services";
+import type webhookManager from './utils/webhookManager'
+
 
 class AutoPoster {
-	constructor(client, options) {
+	public ready: boolean = false;
+	public webhookManager: webhookManager;
+	public client: any;
+	public Instagram: any;
+	public Reddit: any;
+	public Twitch: any;
+	public Twitter: any;
+	public Youtube: any;
+	public mongoose: any
+	constructor(client: any, public options: Options) {
 		/**
       * The Discord Client
       * @type {Discord.Client}
@@ -16,7 +27,7 @@ class AutoPoster {
       * The webhook manager
       * @type {WebhookManager}
     */
-		this.webhookManager = new (require('./utils/webhookManager'))(client);
+		this.webhookManager = new WebhookManager(client);
 		/**
 			* The Autposter options
 			* @type {Options}

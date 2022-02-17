@@ -5,6 +5,9 @@ let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
 class InstagramFetcher {
+	public accounts: Array<String>
+	public enabled: Boolean
+	public AutoPoster: AutoPoster
 	constructor(AutoPoster) {
 		this.AutoPoster = AutoPoster;
 		this.accounts = [];
@@ -114,4 +117,4 @@ class InstagramFetcher {
 }
 
 
-module.exports = InstagramFetcher;
+export default InstagramFetcher;

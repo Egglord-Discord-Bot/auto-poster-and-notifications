@@ -140,4 +140,4 @@ class TwitchFetcher {
 	}
 }
 
-module.exports = TwitchFetcher;
+export default TwitchFetcher;

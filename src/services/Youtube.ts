@@ -111,4 +111,4 @@ class VideoFetcher {
 }
 
 
-module.exports = VideoFetcher;
+export default VideoFetcher;
