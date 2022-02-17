@@ -41,10 +41,9 @@ class TwitterFetcher {
 				if (tweet.retweeted || tweet.text.startsWith('RT')) {
 					console.log(`${tweet.user.name} retreated @${tweet.retweeted_status.user.screen_name}.`);
 					embed.setAuthor(`${tweet.user.name} retweeted: ${tweet.retweeted_status.user.name} (@${tweet.retweeted_status.user.screen_name})`, tweet.retweeted_status.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
-						.setDescription(tweet.retweeted_status.text.replace(tweet.retweeted_status.entities?.media[0]?.url, ''))
+						.setDescription(tweet.retweeted_status.text.replace(tweet.retweeted_status.entities?.media?.[0].url, ''))
 						.setTimestamp(tweet.retweeted_status.created_at);
-					if (tweet.retweeted_status.entities.media == undefined) console.log(tweet.retweeted_status.entities);
-					if (tweet.retweeted_status.entities.media) embed.setImage(tweet.retweeted_status.entities.media[0].media_url_https);
+					if (tweet.retweeted_status.entities.media) embed.setImage(tweet.retweeted_status.entities.media?.[0].media_url_https);
 					twtaccounts.find(account => tweet.user.id_str == account.name).channelIDs.forEach(id => {
 						WebhookManager.addValues(id, embed);
 					});

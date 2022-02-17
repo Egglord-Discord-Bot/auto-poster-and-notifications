@@ -1,6 +1,6 @@
 const	{ AutoPosterSchema } = require('../database/models'),
 	{ MessageEmbed } = require('discord.js'),
-	fetch = require('node-fetch');
+	{ get } = require('axios');
 let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
@@ -16,18 +16,22 @@ class InstagramFetcher {
 		setInterval(async () => {
 			if (!this.enabled) return;
 			for (const { name: accountName, channelIDs } of this.accounts) {
-				const { graphql: { user: { edge_owner_to_timeline_media: photos } } } = await fetch(`https://www.instagram.com/${accountName}/feed/?__a=1`).then(res => res.json());
-				if (photos.edges.length >= 1) {
-					for (const { node } of photos.edges) {
-						if (date <= (node.taken_at_timestamp)) {
-							const embed = new MessageEmbed()
-								.setTitle(`New post by ${node.owner.username}`)
-								.setURL(`https://www.instagram.com/p/${node.shortcode}`)
-								.setImage(node.display_url)
-								.setTimestamp(node.taken_at_timestamp * 1000);
-							channelIDs.forEach((id) => { this.AutoPoster.webhookManager.addValues(id, embed);});
+				try {
+					const { graphql: { user: { edge_owner_to_timeline_media: photos } } } = await get(`https://www.instagram.com/${accountName}/feed/?__a=1`).then(res => JSON.parse(res.data));
+					if (photos.edges.length >= 1) {
+						for (const { node } of photos.edges) {
+							if (date <= (node.taken_at_timestamp)) {
+								const embed = new MessageEmbed()
+									.setTitle(`New post by ${node.owner.username}`)
+									.setURL(`https://www.instagram.com/p/${node.shortcode}`)
+									.setImage(node.display_url)
+									.setTimestamp(node.taken_at_timestamp * 1000);
+								channelIDs.forEach((id) => { this.AutoPoster.webhookManager.addValues(id, embed);});
+							}
 						}
 					}
+				} catch (e) {
+					// error fetching URL
 				}
 			}
 			date = Math.floor(Date.now() / 1000);
