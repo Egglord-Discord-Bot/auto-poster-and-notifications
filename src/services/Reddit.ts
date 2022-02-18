@@ -1,11 +1,24 @@
-const	{ AutoPosterSchema } = require('../database/models'),
-	{ MessageEmbed } = require('discord.js'),
-	fetch = require('node-fetch');
+import type {AutoPoster} from '../index'
+import {AutoPosterSchema} from '../database/models'
+import { MessageEmbed } from 'discord.js';
 let date = Math.floor(Date.now() / 1000);
+
+type Accounts = {
+  subredditName: string;
+	channelIDs: Array<String>
+}
+
+type input = {
+  channelID: string;
+  accountName: string;
+}
 
 // Fetch reddit post
 class RedditFetcher {
-	constructor(AutoPoster) {
+	public AutoPoster: AutoPoster
+	public subreddits: Array<Accounts>
+	public enabled: Boolean
+	constructor(AutoPoster: AutoPoster) {
 		this.AutoPoster = AutoPoster;
 		this.subreddits = [];
 		this.enabled = true;
@@ -63,19 +76,19 @@ class RedditFetcher {
 
 	/**
 	 * Function for toggling the Reddit auto-poster
-	 * @return {Void}
 	*/
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-	 * Function for adding a subreddit
-	 * @param {obj.channelID} String The channel where it's being added to
-	 * @param {obj.accountName} String The subreddit that is being added
-	 * @return {Mongoose.Schema}
-	*/
-	async addItem({ channelID, accountName }) {
+   * Function for adding a subreddit
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being added to
+   * @param {string} input.accountName The subreddit that is being added
+   * @return Promise<Document>
+  */
+	async addItem({ channelID, accountName }: input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -93,12 +106,13 @@ class RedditFetcher {
 	}
 
 	/**
-	 * Function for removing a subreddit
-	 * @param {obj.channelID} String The channel where it's being deleted from
-	 * @param {obj.accountName} String The subreddit that is being deleted
-	 * @return {Mongoose.Schema}
-	*/
-	async deleteItem({ channelID, accountName }) {
+   * Function for removing an subreddit
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being deleted from
+   * @param {string} input.accountName The subreddit that is being removed
+   * @return Promise<Document>
+  */
+	async deleteItem({ channelID, accountName }: input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -110,8 +124,33 @@ class RedditFetcher {
 	}
 }
 
+type Reddit = {
+  title: string;
+  subreddit_name_prefixed: string;
+  permalink: string;
+  url: string;
+  author: string;
+  over_18: Boolean;
+  media: {
+		oembed?: {
+			thumbnail_url: string
+		}
+		reddit_video: {
+			fallback_url: string
+		}
+	};
+  selftext: string;
+}
+
 class RedditPost {
-	constructor({ title, subreddit_name_prefixed, permalink, url, author, over_18, media, selftext }) {
+	public title: string
+	public subreddit: string
+	public link: string
+	public imageURL: string
+	public text: string
+	public author: string
+	public nsfw: Boolean
+	constructor({ title, subreddit_name_prefixed, permalink, url, author, over_18, media, selftext }: Reddit) {
 		this.title = title;
 		this.subreddit = subreddit_name_prefixed;
 		this.link = `https://www.reddit.com${permalink}`;

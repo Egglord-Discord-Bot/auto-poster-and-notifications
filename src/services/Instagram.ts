@@ -14,11 +14,6 @@ type input = {
   accountName: string;
 }
 
-type DBinput = {
-  channelID: string;
-  Account: string;
-}
-
 // Fetch reddit post
 class InstagramFetcher {
 	public AutoPoster: AutoPoster
@@ -61,18 +56,18 @@ class InstagramFetcher {
 	// Updates subreddit list every 5 minutes
 	async updateInstagramList() {
 		// fetch reddit data from database
-		const instaData = await AutoPosterSchema.find({}).then((res: Array<any>) => res.map(data => data.Instagram));
+		const instaData = await AutoPosterSchema.find({}).then(res  => res.map(data => data.Instagram));
 		if (!instaData[0]) return this.enabled = false;
 
 		// Get all subreddits (remove duplicates)
-		const instaAcc = [...new Set(instaData.map((item: any) => item.map((obj: DBinput) => obj.Account)).reduce((a: Array<string>, b: Array<string>) => a.concat(b)))];
+		const instaAcc = [...new Set(instaData.map(item => item.map(obj => obj.Account)).reduce((a, b) => a.concat(b)))];
 
 		// Put subreddits with their list of channels to post to
-		this.accounts = instaAcc.map(name => ({
+    this.accounts = instaAcc.map(name => <Accounts>({
 			name: name,
-			channelIDs: [...new Set(instaData.map((item: any) => item.filter((obj: DBinput) => obj.Account == name))
-        .map((obj: any) => obj.map((i: DBinput) => i.channelID))
-        .reduce((a: Array<string>, b: Array<string>) => a.concat(b)))
+			channelIDs: [...new Set(instaData.map(item => item.filter(obj => obj.Account == name))
+        .map(obj => obj.map(i => i.channelID))
+        .reduce((a, b) => a.concat(b)))
       ],
 		}));
 	}
@@ -95,7 +90,7 @@ class InstagramFetcher {
 	}
 
 	/**
-   * Function for adding an instgram account
+   * Function for adding an instagram account
    * @param {input} input the input
    * @param {string} input.channelID The channel where it's being added to
    * @param {string} input.accountName The instagram account that is being added
@@ -120,7 +115,7 @@ class InstagramFetcher {
 	}
 
   /**
-   * Function for removing an instgram account
+   * Function for removing an instagram account
    * @param {input} input the input
    * @param {string} input.channelID The channel where it's being deleted from
    * @param {string} input.accountName The instagram account that is being removed

@@ -1,11 +1,31 @@
-const	{ AutoPosterSchema } = require('../database/models'),
-	{ MessageEmbed } = require('discord.js'),
-	fetch = require('node-fetch');
+import type {AutoPoster} from '../index'
+import {AutoPosterSchema} from '../database/models'
+import { MessageEmbed } from 'discord.js';
 let date = Math.floor(Date.now() / 1000);
+
+type Accounts = {
+  account: string;
+	channelIDs: Array<String>
+}
+
+type input = {
+  channelID: string;
+  accountName: string;
+}
+
+type Options = {
+	clientID: string
+	clientSecret: string
+}
 
 // Fetch reddit post
 class TwitchFetcher {
-	constructor(AutoPoster, options) {
+	public AutoPoster: AutoPoster
+	public accounts: Array<Accounts>
+	public enabled: Boolean
+	public access_token: null | string
+	public options: Options
+	constructor(AutoPoster: AutoPoster, options: Options) {
 		this.AutoPoster = AutoPoster;
 		this.accounts = [];
 		this.enabled = true;
@@ -60,19 +80,19 @@ class TwitchFetcher {
 
 	/**
 	 * Function for toggling the Twitch auto-poster
-	 * @return {Void}
 	*/
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-	 * Function for adding a Twitch account
-	 * @param {obj.channelID} String The channel where it's being added to
-	 * @param {obj.accountName} String The Twitch account that is being added
-	 * @return {Mongoose.Schema}
-	*/
-	async addItem({ channelID, accountName }) {
+   * Function for adding an Twitch account
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being added to
+   * @param {string} input.accountName The Twitch account that is being added
+   * @return Promise<Document>
+  */
+	async addItem({ channelID, accountName }: input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -90,12 +110,13 @@ class TwitchFetcher {
 	}
 
 	/**
-	 * Function for removing a Twitch account
-	 * @param {obj.channelID} String The channel where it's being deleted from
-	 * @param {obj.accountName} String The Twitch account that is being deleted
-	 * @return {Mongoose.Schema}
-	*/
-	async deleteItem({ channelID, accountName }) {
+   * Function for removing an Twitch account
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being deleted from
+   * @param {string} input.accountName The Twitch account that is being removed
+   * @return Promise<Document>
+  */
+	async deleteItem({ channelID, accountName }: input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -108,8 +129,6 @@ class TwitchFetcher {
 
 	/**
    * Function for fetching access_token to interact with the twitch API
-   * @param {bot} bot The instantiating client
-   * @returns {string}
   */
 	async refreshTokens() {
 		const data = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${this.options.clientID}&client_secret=${this.options.clientSecret}&grant_type=client_credentials`, {
@@ -120,12 +139,11 @@ class TwitchFetcher {
 
 	/**
    * Function for fetching data from twitch API
-   * @param {bot} bot The instantiating client
    * @param {string} endpoint the endpoint of the twitch API to request
    * @param {object} queryParams The query sent to twitch API
    * @returns {object}
   */
-	request(endpoint, queryParams = {}) {
+	request(endpoint: string, queryParams = {}) {
 		const qParams = new URLSearchParams(queryParams);
 		return fetch('https://api.twitch.tv/helix' + endpoint + `?${qParams.toString()}`, {
 			headers: { 'Client-ID': this.options.clientID, 'Authorization': `Bearer ${this.access_token}` },
