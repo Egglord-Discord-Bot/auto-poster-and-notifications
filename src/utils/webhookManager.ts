@@ -72,4 +72,4 @@ class WebhookManager {
 	}
 }
 
-module.exports = WebhookManager;
+export default WebhookManager;

@@ -1,10 +1,10 @@
-import Instagram, Reddit, Twitch, Twitter, Youtube from "./services";
-import type webhookManager from './utils/webhookManager'
-
+import type Instagram, Reddit, Twitch, Twitter, Youtube from "./services";
+import WebhookManager from './utils/webhookManager'
+import type {Options} from './utils/types'
 
 class AutoPoster {
 	public ready: boolean = false;
-	public webhookManager: webhookManager;
+	public webhookManager: WebhookManager;
 	public client: any;
 	public Instagram: any;
 	public Reddit: any;
@@ -37,11 +37,11 @@ class AutoPoster {
 			* The services
 			* @type {ServiceManager}
 		*/
-		if (this.options?.Instagram.enabled) this.Instagram = new Instagram(this);
-		if (this.options?.Reddit.enabled) this.Reddit = new Reddit(this);
-		if (this.options?.Twitch.enabled && this.options.Twitch.clientID && this.options.Twitch.clientSecret) this.Twitch = new Twitch(this);
-		if (this.options?.Twitter.enabled) this.Twitter = new Twitter(this);
-		if (this.options?.Youtube.enabled) this.Youtube = new Youtube(this);
+		if (this.options?.Instagram?.enabled) this.Instagram = new Instagram(this);
+		if (this.options?.Reddit?.enabled) this.Reddit = new Reddit(this);
+		if (this.options?.Twitch?.enabled && this.options.Twitch.clientID && this.options.Twitch.clientSecret) this.Twitch = new Twitch(this);
+		if (this.options?.Twitter?.enabled) this.Twitter = new Twitter(this);
+		if (this.options?.Youtube?.enabled) this.Youtube = new Youtube(this);
 
 		if (this.options.mongoDBURL) this.mongoose = require('./database').init(this);
 
