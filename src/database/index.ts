@@ -1,17 +1,16 @@
-const mongoose = require('mongoose');
+import type AutoPoster from '../index'
+import mongoose from 'mongoose';
 
-module.exports = {
-	init: (AutoPoster) => {
+export default {
+	init: (AutoPoster: AutoPoster) => {
 		const dbOptions = {
 			useNewUrlParser: true,
 			autoIndex: false,
-			poolSize: 5,
 			connectTimeoutMS: 10000,
 			family: 4,
 			useUnifiedTopology: true,
 		};
 		mongoose.connect(AutoPoster.options.MongoDBURl, dbOptions);
-		mongoose.set('useFindAndModify', false);
 		mongoose.Promise = global.Promise;
 		mongoose.connection.on('connected', () => {
 			console.log('Mongoose connection successfully opened', 'ready');

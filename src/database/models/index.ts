@@ -1,3 +1,5 @@
-module.exports = {
-	AutoPosterSchema: require('./AutoPosterSchema'),
+import AutoPosterSchema from './AutoPosterSchema.js';
+
+export default {
+	AutoPosterSchema,
 };

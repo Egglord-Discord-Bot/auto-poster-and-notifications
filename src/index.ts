@@ -63,4 +63,4 @@ class AutoPoster {
 	}
 }
 
-module.exports = AutoPoster;
+export default AutoPoster;
