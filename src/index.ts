@@ -2,6 +2,10 @@ import type Instagram, Reddit, Twitch, Twitter, Youtube from "./services";
 import WebhookManager from './utils/webhookManager'
 import type {Options} from './utils/types'
 
+/**
+	* The Discord Client
+	* @type {AutoPoster}
+*/
 class AutoPoster {
 	public ready: boolean = false;
 	public webhookManager: WebhookManager;
@@ -63,4 +67,4 @@ class AutoPoster {
 	}
 }
 
-export default AutoPoster;
+export type {AutoPoster};

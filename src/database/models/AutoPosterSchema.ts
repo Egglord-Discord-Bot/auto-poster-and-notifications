@@ -1,23 +1,26 @@
-import { model, Schema, Model, Document } from 'mongoose';
+import { model, Schema } from 'mongoose';
 
-interface AutoPoster extends Document {
-	guildID: String,
-	Instagram: Array<String | String>,
-	Reddit: Array<String | String>,
-	Twitch: Array<String | String>,
-	Twitter: Array<String | String>,
-	Youtube: Array<String | String>,
+export type input = {
+  channelID: string;
+  Account: string;
+};
+
+interface AutoPoster {
+  guildID: string;
+  Instagram: Array<input>;
+  Reddit: Array<input>;
+  Twitch: Array<input>;
+  Twitter: Array<input>;
+  Youtube: Array<input>;
 }
 
-const AutoPosterSchema: Schema = new Schema({
-	guildID: String,
-	Instagram: Array,
-	Reddit: Array,
-	Twitch: Array,
-	Twitter: Array,
-	Youtube: Array,
-});
+const AutoPosterSchema = new Schema<AutoPoster>({
+  guildID: { required: true, },
+  Instagram: { default: [] },
+  Reddit: { default: [] },
+  Youtube: { default: []},
+  Twitch: { default: []},
+  Twitter: { default: []},
+})
 
-const AutoPosterData: Model<AutoPoster> = model('AutoPosters', AutoPosterSchema);
-
-export default AutoPosterData
+export default model<AutoPoster>('AutoPosters', AutoPosterSchema);

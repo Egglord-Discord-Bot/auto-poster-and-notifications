@@ -7,18 +7,18 @@ export interface Options {
   }
   Twitch?: {
     enabled: Boolean
-    clientID: String
-    clientSecret: String
+    clientID: string
+    clientSecret: string
   }
   Twitter?: {
     enabled: Boolean
-    consumer_key: String
-    consumer_secret: String
-    access_token_key: String
-    access_token_secret: String
+    consumer_key: string
+    consumer_secret: string
+    access_token_key: string
+    access_token_secret: string
   }
   Youtube?: {
     enabled: Boolean
   }
-  mongoDBURL?: String
+  mongoDBURL?: string
 }

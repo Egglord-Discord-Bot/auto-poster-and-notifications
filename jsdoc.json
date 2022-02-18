@@ -1,0 +1,29 @@
+{
+  "source": {
+    "include": [
+      "package.json",
+      "README.md",
+      "src"
+    ],
+    "includePattern": ".ts$",
+    "excludePattern": "(node_modules/|docs)"
+  },
+  "plugins": [
+    "plugins/markdown",
+    "jsdoc-plugin-typescript"
+  ],
+  "opts": {
+    "encoding": "utf8",
+    "readme": "README.md",
+    "destination": "jsdocs/",
+    "recurse": true,
+    "verbose": true,
+    "template": "./node_modules/clean-jsdoc-theme",
+    "theme_opts": {
+      "theme": "dark"
+    }
+  },
+  "typescript": {
+    "moduleRoot": "src"
+  }
+}

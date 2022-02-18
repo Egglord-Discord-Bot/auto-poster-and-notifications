@@ -1,5 +1,5 @@
 import AutoPosterSchema from './AutoPosterSchema.js';
 
-export default {
+export {
 	AutoPosterSchema,
 };

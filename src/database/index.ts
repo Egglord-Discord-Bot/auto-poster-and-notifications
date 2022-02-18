@@ -1,8 +1,9 @@
-import type AutoPoster from '../index'
+import type {AutoPoster} from "../index";
 import mongoose from 'mongoose';
 
 export default {
 	init: (AutoPoster: AutoPoster) => {
+		if (!AutoPoster.options?.mongoDBURL) return
 		const dbOptions = {
 			useNewUrlParser: true,
 			autoIndex: false,
@@ -10,7 +11,7 @@ export default {
 			family: 4,
 			useUnifiedTopology: true,
 		};
-		mongoose.connect(AutoPoster.options.MongoDBURl, dbOptions);
+		mongoose.connect(AutoPoster.options.mongoDBURL, dbOptions);
 		mongoose.Promise = global.Promise;
 		mongoose.connection.on('connected', () => {
 			console.log('Mongoose connection successfully opened', 'ready');
