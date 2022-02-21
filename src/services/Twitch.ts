@@ -1,22 +1,8 @@
 import type {AutoPoster} from '../index'
 import {AutoPosterSchema} from '../database/models'
 import { MessageEmbed } from 'discord.js';
+import type { Accounts, Input, TwitchOptions } from '../utils/types'
 let date = Math.floor(Date.now() / 1000);
-
-type Accounts = {
-  account: string;
-	channelIDs: Array<String>
-}
-
-type input = {
-  channelID: string;
-  accountName: string;
-}
-
-type Options = {
-	clientID: string
-	clientSecret: string
-}
 
 // Fetch reddit post
 class TwitchFetcher {
@@ -24,8 +10,8 @@ class TwitchFetcher {
 	public accounts: Array<Accounts>
 	public enabled: Boolean
 	public access_token: null | string
-	public options: Options
-	constructor(AutoPoster: AutoPoster, options: Options) {
+	public options: TwitchOptions
+	constructor(AutoPoster: AutoPoster, options: TwitchOptions) {
 		this.AutoPoster = AutoPoster;
 		this.accounts = [];
 		this.enabled = true;
@@ -37,8 +23,8 @@ class TwitchFetcher {
 	async fetchPosts() {
 		setInterval(async () => {
 			if (!this.enabled) return;
-			for (const { account, channelIDs } of this.accounts) {
-				const data = await this.request('/streams', { user_login: account }).then(s => s && s.data[0]);
+			for (const { name, channelIDs } of this.accounts) {
+				const data = await this.request('/streams', { user_login: name }).then(s => s && s.data[0]);
 				if (data && date >= new Date(data.started_at).getTime()) {
 					const embed = new MessageEmbed()
 						.setTitle(data.user_name)
@@ -62,7 +48,7 @@ class TwitchFetcher {
 
 		// Put subreddits with their list of channels to post to
 		this.accounts = twitchacc.map(sub => ({
-			account: sub,
+			name: sub,
 			channelIDs: [...new Set(twitchData.map(item => item.filter(obj => obj.Account == sub)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
 		}));
 	}
@@ -92,7 +78,7 @@ class TwitchFetcher {
    * @param {string} input.accountName The Twitch account that is being added
    * @return Promise<Document>
   */
-	async addItem({ channelID, accountName }: input) {
+	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -116,7 +102,7 @@ class TwitchFetcher {
    * @param {string} input.accountName The Twitch account that is being removed
    * @return Promise<Document>
   */
-	async deleteItem({ channelID, accountName }: input) {
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });

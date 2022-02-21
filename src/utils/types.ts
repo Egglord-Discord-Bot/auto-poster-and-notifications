@@ -22,3 +22,25 @@ export interface Options {
   }
   mongoDBURL?: string
 }
+
+export interface Accounts {
+  name: string;
+	channelIDs: Array<String>
+}
+
+export interface Input {
+  channelID: string;
+  accountName: string;
+}
+
+export interface TwitchOptions {
+	clientID: string
+	clientSecret: string
+}
+
+export interface TwitterOptions {
+	consumer_key:	string;
+	consumer_secret: string;
+	access_token_key: string;
+	access_token_secret: string
+}

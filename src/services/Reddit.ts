@@ -1,17 +1,8 @@
 import type {AutoPoster} from '../index'
 import {AutoPosterSchema} from '../database/models'
 import { MessageEmbed } from 'discord.js';
+import type { Accounts, Input } from '../utils/types'
 let date = Math.floor(Date.now() / 1000);
-
-type Accounts = {
-  subredditName: string;
-	channelIDs: Array<String>
-}
-
-type input = {
-  channelID: string;
-  accountName: string;
-}
 
 // Fetch reddit post
 class RedditFetcher {
@@ -28,7 +19,7 @@ class RedditFetcher {
 	async fetchPosts() {
 		setInterval(async () => {
 			if (!this.enabled) return;
-			for (const { subredditName: sub, channelIDs } of this.subreddits) {
+			for (const { name: sub, channelIDs } of this.subreddits) {
 				const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
 				if (resp.data?.children) {
 					for (const { data } of resp.data.children.reverse()) {
@@ -59,7 +50,7 @@ class RedditFetcher {
 
 		// Put subreddits with their list of channels to post to
 		this.subreddits = subreddits.map(sub => ({
-			subredditName: sub,
+			name: sub,
 			channelIDs: [...new Set(redditData.map(item => item.filter(obj => obj.Account == sub)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
 		}));
 	}
@@ -88,7 +79,7 @@ class RedditFetcher {
    * @param {string} input.accountName The subreddit that is being added
    * @return Promise<Document>
   */
-	async addItem({ channelID, accountName }: input) {
+	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -112,7 +103,7 @@ class RedditFetcher {
    * @param {string} input.accountName The subreddit that is being removed
    * @return Promise<Document>
   */
-	async deleteItem({ channelID, accountName }: input) {
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });

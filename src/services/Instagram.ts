@@ -1,18 +1,11 @@
-import type {AutoPoster} from '../index'
-import {AutoPosterSchema} from '../database/models'
+import type { AutoPoster } from '../index'
+import { AutoPosterSchema } from '../database/models'
 import { MessageEmbed } from 'discord.js';
+import type { Accounts, Input } from '../utils/types'
 const {get} = require('axios').default;
 let date = Math.floor(Date.now() / 1000);
 
-type Accounts = {
-  name: string;
-	channelIDs: Array<String>
-}
 
-type input = {
-  channelID: string;
-  accountName: string;
-}
 
 // Fetch reddit post
 class InstagramFetcher {
@@ -96,7 +89,7 @@ class InstagramFetcher {
    * @param {string} input.accountName The instagram account that is being added
    * @return Promise<Document>
   */
-	async addItem({ channelID, accountName }: input) {
+	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -121,7 +114,7 @@ class InstagramFetcher {
    * @param {string} input.accountName The instagram account that is being removed
    * @return Promise<Document>
   */
-	async deleteItem({ channelID, accountName }: input) {
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });

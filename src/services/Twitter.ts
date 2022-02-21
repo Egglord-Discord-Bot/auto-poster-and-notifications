@@ -2,24 +2,7 @@ import type {AutoPoster} from '../index'
 import {AutoPosterSchema} from '../database/models'
 import { MessageEmbed } from 'discord.js';
 import Twitter from 'twitter-lite';
-
-type Accounts = {
-  name: string;
-	channelIDs: Array<String>
-}
-
-type input = {
-  channelID: string;
-  accountName: string;
-}
-
-type Options = {
-	consumer_key:	string;
-	consumer_secret: string;
-	access_token_key: string;
-	access_token_secret: string
-}
-
+import type { Accounts, Input, TwitterOptions } from '../utils/types'
 
 // Fetch new twitter posts
 class TwitterFetcher {
@@ -27,7 +10,7 @@ class TwitterFetcher {
 	public twtaccounts: Array<Accounts>
 	public enabled: Boolean
 	public twitter_client: Twitter
-	constructor(AutoPoster: AutoPoster, config: Options) {
+	constructor(AutoPoster: AutoPoster, config: TwitterOptions) {
 		this.AutoPoster = AutoPoster;
 		this.twtaccounts = [];
 		this.enabled = true;
@@ -179,7 +162,7 @@ class TwitterFetcher {
    * @param {string} input.accountName The Twitter account that is being added
    * @return Promise<Document>
   */
-	async addItem({ channelID, accountName }: input) {
+	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -203,7 +186,7 @@ class TwitterFetcher {
    * @param {string} input.accountName The Twitter account that is being removed
    * @return Promise<Document>
   */
-	async deleteItem({ channelID, accountName }: input) {
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });

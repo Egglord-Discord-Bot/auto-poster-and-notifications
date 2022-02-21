@@ -1,11 +1,17 @@
-const	{ AutoPosterSchema } = require('../database/models'),
-	{ MessageEmbed } = require('discord.js'),
-	parser = new (require('rss-parser'))();
+import type {AutoPoster} from '../index'
+import {AutoPosterSchema} from '../database/models'
+import { MessageEmbed } from 'discord.js';
+import type { Accounts, Input } from '../utils/types'
+
+const	parser = new (require('rss-parser'))();
 let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
 class VideoFetcher {
-	constructor(AutoPoster) {
+	public AutoPoster: AutoPoster
+	public channels: Array<Accounts>
+	public enabled: Boolean
+	constructor(AutoPoster: AutoPoster) {
 		this.AutoPoster = AutoPoster;
 		this.channels = [];
 		this.enabled = true;
@@ -15,19 +21,19 @@ class VideoFetcher {
 	async fetchVideos() {
 		setInterval(async () => {
 			if (!this.enabled) return;
-			for (const { channel, channelIDs } of this.channels) {
+			for (const { name: channel, channelIDs } of this.channels) {
 				const { items: videos, title, link, pubDate } = await parser.parseURL(`https://www.youtube.com/feeds/videos.xml?channel_id=${channel}`);
 				for (const video of videos) {
 					if (date <= pubDate) {
 						const embed = new MessageEmbed()
 							.setColor('RED')
 							.setTitle(video.title)
-							.setAuthor(title, 'https://yt3.ggpht.com/yti/APfAmoGR2_xZ9odnTRXA0lXy7U7WBjBzHyy-0SNK7fJPMA=s88-c-k-c0x00ffffff-no-rj-mo', link)
+							.setAuthor({name: title, iconURL: 'https://yt3.ggpht.com/yti/APfAmoGR2_xZ9odnTRXA0lXy7U7WBjBzHyy-0SNK7fJPMA=s88-c-k-c0x00ffffff-no-rj-mo', url: link})
 							.setURL(video.link)
 							.setImage(`http://i1.ytimg.com/vi/${video.id.split(':')[2]}/hqdefault.jpg`)
 							.setTimestamp()
-							.setFooter(`By: ${title}`);
-						channelIDs.forEach((id) => { this.bot.addEmbed(id, embed);});
+							.setFooter({text: `By: ${title}`});
+						channelIDs.forEach((id) => { this.AutoPoster.webhookManager.addValues(id, embed);});
 					}
 				}
 			}
@@ -46,7 +52,7 @@ class VideoFetcher {
 
 		// Put subreddits with their list of channels to post to
 		this.channels = ytaccounts.map(acc => ({
-			channel: acc,
+			name: acc,
 			channelIDs: [...new Set(youtubeData.map(item => item.filter(obj => obj.Account == acc)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
 		}));
 	}
@@ -63,19 +69,19 @@ class VideoFetcher {
 
 	/**
     * Function for toggling the Youtube auto-poster
-    * @return {Void}
   */
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-   * Function for adding a Youtube account
-   * @param {obj.channelID} String The channel where it's being added to
-   * @param {obj.accountName} String The Youtube account that is being added
-   * @return {Mongoose.Schema}
+   * Function for adding an Youtube account
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being added to
+   * @param {string} input.accountName The Youtube account that is being added
+   * @return Promise<Document>
   */
-	async addItem({ channelID, accountName }) {
+	async addItem({ channelID, accountName }: Input) {
 		const channel = this.AutoPoster.client.channels.get(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -93,12 +99,13 @@ class VideoFetcher {
 	}
 
 	/**
-   * Function for removing a Youtube account
-   * @param {obj.channelID} String The channel where it's being deleted from
-   * @param {obj.accountName} String The Youtube account that is being deleted
-   * @return {Mongoose.Schema}
+   * Function for removing an Youtube account
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being deleted from
+   * @param {string} input.accountName The Youtube account that is being removed
+   * @return Promise<Document>
   */
-	async deleteItem({ channelID, accountName }) {
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = this.AutoPoster.client.channels.get(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
