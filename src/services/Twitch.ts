@@ -19,7 +19,9 @@ class TwitchFetcher {
 		this.options = options;
 	}
 
-	// Fetch new posts (every 1 minute)
+	/**
+		* Function for fetching new posts on the subreddit
+	*/
 	async fetchPosts() {
 		setInterval(async () => {
 			if (!this.enabled) return;
@@ -37,7 +39,9 @@ class TwitchFetcher {
 		}, 60000);
 	}
 
-	// Updates subreddit list every 5 minutes
+	/**
+	 	* Function for fetching the Twitch list
+	*/
 	async updateSubredditList() {
 		// fetch reddit data from database
 		const twitchData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Twitch));
@@ -53,7 +57,9 @@ class TwitchFetcher {
 		}));
 	}
 
-	// init the class
+	/**
+	 	* Function for fetching the Instagram list
+	*/
 	async init() {
 		await this.refreshTokens();
 		await this.updateSubredditList();
@@ -65,18 +71,18 @@ class TwitchFetcher {
 	}
 
 	/**
-	 * Function for toggling the Twitch auto-poster
+	 	* Function for toggling the Twitch auto-poster
 	*/
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-   * Function for adding an Twitch account
-   * @param {input} input the input
-   * @param {string} input.channelID The channel where it's being added to
-   * @param {string} input.accountName The Twitch account that is being added
-   * @return Promise<Document>
+   	* Function for adding an Twitch account
+   	* @param {input} input the input
+   	* @param {string} input.channelID The channel where it's being added to
+   	* @param {string} input.accountName The Twitch account that is being added
+   	* @return Promise<Document>
   */
 	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);

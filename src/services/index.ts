@@ -4,7 +4,7 @@ import Youtube from './Youtube.js';
 import Twitter from './Twitter.js';
 import Twitch from './Twitch.js';
 
-export default {
+export {
 	Reddit,
 	Instagram,
 	Youtube,

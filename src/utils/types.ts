@@ -23,6 +23,18 @@ export interface Options {
   mongoDBURL?: string
 }
 
+export interface AutoPosterClass {
+  ready: boolean;
+	//webhookManager: WebhookManager;
+	client: any;
+	Instagram: any;
+	Reddit: any;
+	Twitch: any;
+	Twitter: any;
+	Youtube: any;
+	mongoose: any
+}
+
 export interface Accounts {
   name: string;
 	channelIDs: Array<String>
@@ -43,4 +55,22 @@ export interface TwitterOptions {
 	consumer_secret: string;
 	access_token_key: string;
 	access_token_secret: string
+}
+
+export type Reddit = {
+  title: string;
+  subreddit_name_prefixed: string;
+  permalink: string;
+  url: string;
+  author: string;
+  over_18: Boolean;
+  media: {
+		oembed?: {
+			thumbnail_url: string
+		}
+		reddit_video: {
+			fallback_url: string
+		}
+	};
+  selftext: string;
 }

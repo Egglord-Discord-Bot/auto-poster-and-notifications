@@ -1,5 +1,9 @@
 import { Collection, MessageEmbed, Webhook } from 'discord.js';
 
+/**
+	* The webhook manager
+	* @type {WebhookManager}
+*/
 class WebhookManager {
 	public client: any;
 	public messages: Collection<String, Array<MessageEmbed>>;

@@ -1,21 +1,22 @@
-import type Instagram, Reddit, Twitch, Twitter, Youtube from "./services";
+import type {Instagram, Reddit, Twitch, Twitter, Youtube} from "./services";
 import WebhookManager from './utils/webhookManager'
 import type {Options} from './utils/types'
+import type {AutoPosterClass} from './utils/types'
 
 /**
-	* The Discord Client
-	* @type {AutoPoster}
+	* The Auto poster Client
+	* @type {AutoPosterClass}
 */
-class AutoPoster {
-	public ready: boolean = false;
-	public webhookManager: WebhookManager;
-	public client: any;
-	public Instagram: any;
-	public Reddit: any;
-	public Twitch: any;
-	public Twitter: any;
-	public Youtube: any;
-	public mongoose: any
+class AutoPoster implements AutoPosterClass {
+	ready: boolean;
+	webhookManager: WebhookManager;
+	client: any;
+	Instagram: Instagram;
+	Reddit: Reddit;
+	Twitch: any;
+	Twitter: any;
+	Youtube: any;
+	mongoose: any
 	constructor(client: any, public options: Options) {
 		/**
       * The Discord Client

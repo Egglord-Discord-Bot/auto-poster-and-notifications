@@ -12,14 +12,15 @@ class InstagramFetcher {
 	public AutoPoster: AutoPoster
 	public accounts: Array<Accounts>
 	public enabled: Boolean
-
 	constructor(AutoPoster: AutoPoster) {
 		this.AutoPoster = AutoPoster;
 		this.accounts = [];
 		this.enabled = true;
 	}
 
-	// Fetch new posts (every 1 minute)
+	/**
+	 * Function for fetching new instagram post
+	*/
 	async fetchPosts() {
 		setInterval(async () => {
 			if (!this.enabled) return;
@@ -46,7 +47,9 @@ class InstagramFetcher {
 		}, 60000);
 	}
 
-	// Updates subreddit list every 5 minutes
+	/**
+	 * Function for fetching the instagram list
+	*/
 	async updateInstagramList() {
 		// fetch reddit data from database
 		const instaData = await AutoPosterSchema.find({}).then(res  => res.map(data => data.Instagram));
@@ -65,7 +68,9 @@ class InstagramFetcher {
 		}));
 	}
 
-	// init the class
+	/**
+	 * Function for fetching the Instagram list
+	*/
 	async init() {
 		await this.updateInstagramList();
 		await this.fetchPosts();

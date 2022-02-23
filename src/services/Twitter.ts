@@ -17,7 +17,9 @@ class TwitterFetcher {
 		this.twitter_client = new Twitter(config);
 	}
 
-	// Fetch new posts
+	/**
+	 	* Function for fetching new posts on the subreddit
+	*/
 	async fetchPosts() {
 		// Create stream
 		const twtaccounts = this.twtaccounts;
@@ -107,7 +109,9 @@ class TwitterFetcher {
 		}, 4.5 * 60000);
 	}
 
-	// Updates twitter account list every 5 minutes
+	/**
+	 	* Function for fetching the Twitter list
+	*/
 	async updatingTwitterAccountList() {
 		// fetch reddit data from database
 		const twtData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Twitter));
@@ -136,7 +140,9 @@ class TwitterFetcher {
 		}
 	}
 
-	// init the class
+	/**
+	 	* Function for starting the Reddit auto-poster
+	*/
 	async init() {
 		await this.updatingTwitterAccountList();
 		await this.fetchPosts();

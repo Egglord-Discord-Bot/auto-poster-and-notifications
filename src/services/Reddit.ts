@@ -1,7 +1,7 @@
 import type {AutoPoster} from '../index'
 import {AutoPosterSchema} from '../database/models'
 import { MessageEmbed } from 'discord.js';
-import type { Accounts, Input } from '../utils/types'
+import type { Accounts, Input, Reddit } from '../utils/types'
 let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
@@ -15,7 +15,9 @@ class RedditFetcher {
 		this.enabled = true;
 	}
 
-	// Fetch new posts (every 1 minute)
+	/**
+	 	* Function for fetching new posts on the subreddit
+	*/
 	async fetchPosts() {
 		setInterval(async () => {
 			if (!this.enabled) return;
@@ -39,7 +41,9 @@ class RedditFetcher {
 		}, 60000);
 	}
 
-	// Updates subreddit list every 5 minutes
+	/**
+	 	* Function for fetching the subreddit list
+	*/
 	async updateSubredditList() {
 		// fetch reddit data from database
 		const redditData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Reddit));
@@ -55,7 +59,9 @@ class RedditFetcher {
 		}));
 	}
 
-	// init the class
+	/**
+	 	* Function for starting the Reddit auto-poster
+	*/
 	async init() {
 		await this.updateSubredditList();
 		await this.fetchPosts();
@@ -66,18 +72,18 @@ class RedditFetcher {
 	}
 
 	/**
-	 * Function for toggling the Reddit auto-poster
+	 	* Function for toggling the Reddit auto-poster
 	*/
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-   * Function for adding a subreddit
-   * @param {input} input the input
-   * @param {string} input.channelID The channel where it's being added to
-   * @param {string} input.accountName The subreddit that is being added
-   * @return Promise<Document>
+   	* Function for adding a subreddit
+   	* @param {input} input the input
+   	* @param {string} input.channelID The channel where it's being added to
+   	* @param {string} input.accountName The subreddit that is being added
+   	* @return Promise<Document>
   */
 	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
@@ -97,11 +103,11 @@ class RedditFetcher {
 	}
 
 	/**
-   * Function for removing an subreddit
-   * @param {input} input the input
-   * @param {string} input.channelID The channel where it's being deleted from
-   * @param {string} input.accountName The subreddit that is being removed
-   * @return Promise<Document>
+   	* Function for removing an subreddit
+   	* @param {input} input the input
+   	* @param {string} input.channelID The channel where it's being deleted from
+   	* @param {string} input.accountName The subreddit that is being removed
+   	* @return Promise<Document>
   */
 	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
@@ -115,23 +121,6 @@ class RedditFetcher {
 	}
 }
 
-type Reddit = {
-  title: string;
-  subreddit_name_prefixed: string;
-  permalink: string;
-  url: string;
-  author: string;
-  over_18: Boolean;
-  media: {
-		oembed?: {
-			thumbnail_url: string
-		}
-		reddit_video: {
-			fallback_url: string
-		}
-	};
-  selftext: string;
-}
 
 class RedditPost {
 	public title: string

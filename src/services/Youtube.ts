@@ -17,7 +17,9 @@ class VideoFetcher {
 		this.enabled = true;
 	}
 
-	// Fetch new posts (every 1 minute)
+	/**
+		* Function for fetching new posts on the subreddit
+	*/
 	async fetchVideos() {
 		setInterval(async () => {
 			if (!this.enabled) return;
@@ -41,7 +43,9 @@ class VideoFetcher {
 		}, 1 * 60000);
 	}
 
-	// Updates subreddit list every 5 minutes
+	/**
+		* Function for fetching the Twitter list
+	*/
 	async updateChannelsList() {
 		// fetch reddit data from database
 		const youtubeData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Youtube));
@@ -57,7 +61,9 @@ class VideoFetcher {
 		}));
 	}
 
-	// init the class
+	/**
+		* Function for starting the Reddit auto-poster
+	*/
 	async init() {
 		await this.updateChannelsList();
 		await this.fetchVideos();
