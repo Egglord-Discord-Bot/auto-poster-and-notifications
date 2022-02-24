@@ -1,7 +1,7 @@
 import type {AutoPoster} from '../index'
 import {AutoPosterSchema} from '../database/models'
 import { MessageEmbed } from 'discord.js';
-import type { Accounts, Input, TwitchOptions } from '../utils/types'
+import type { Accounts, Input, TwitchOptions, TwitchOutput } from '../utils/types'
 let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
@@ -26,7 +26,7 @@ class TwitchFetcher {
 		setInterval(async () => {
 			if (!this.enabled) return;
 			for (const { name, channelIDs } of this.accounts) {
-				const data = await this.request('/streams', { user_login: name }).then(s => s && s.data[0]);
+				const data = await this.request('/streams', { user_login: name }).then((s: TwitchOutput) => s.data?.[0] ?? null);
 				if (data && date >= new Date(data.started_at).getTime()) {
 					const embed = new MessageEmbed()
 						.setTitle(data.user_name)
@@ -130,23 +130,19 @@ class TwitchFetcher {
 	}
 
 	/**
-   * Function for fetching data from twitch API
-   * @param {string} endpoint the endpoint of the twitch API to request
-   * @param {object} queryParams The query sent to twitch API
-   * @returns {object}
+   	* Function for fetching data from twitch API
+   	* @param {string} endpoint the endpoint of the twitch API to request
+   	* @param {object} queryParams The query sent to twitch API
+   	* @returns Promise<TwitchOutput>
   */
-	request(endpoint: string, queryParams = {}) {
+	async request(endpoint: string, queryParams = {}) {
 		const qParams = new URLSearchParams(queryParams);
-		return fetch('https://api.twitch.tv/helix' + endpoint + `?${qParams.toString()}`, {
+		const data = await fetch(`https://api.twitch.tv/helix${endpoint}?${qParams.toString()}`, {
 			headers: { 'Client-ID': this.options.clientID, 'Authorization': `Bearer ${this.access_token}` },
 		}).then(res => res.json())
-			.then(data => {
-				if (data.error === 'Unauthorized') {
-					return this.refreshTokens()
-						.then(() => this.request(endpoint, queryParams));
-				}
-				return data;
-			}).catch(e => console.log(e));
+
+		if (data.error === 'Unauthorized') return this.refreshTokens().then(() => this.request(endpoint, queryParams));
+		return data as TwitchOutput
 	}
 }
 

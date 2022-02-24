@@ -74,3 +74,26 @@ export type Reddit = {
 	};
   selftext: string;
 }
+
+export type TwitchLivestream = {
+  id: string,
+  user_id: string,
+  user_login: string,
+  user_name: string,
+  game_id: string,
+  game_name: string,
+  type: string,
+  title: string,
+  viewer_count: number,
+  started_at: Date,
+  language: string,
+  thumbnail_url: string,
+  tag_ids: Array<Array<string>>,
+  is_mature: boolean
+}
+
+export interface TwitchOutput {
+  data?: TwitchLivestream[],
+  pagination: {},
+  error?: string
+}

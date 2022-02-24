@@ -1,4 +1,4 @@
-import type {Instagram, Reddit, Twitch, Twitter, Youtube} from "./services";
+import {Instagram, Reddit, Twitch, Twitter, Youtube} from "./services";
 import WebhookManager from './utils/webhookManager'
 import type {Options} from './utils/types'
 import type {AutoPosterClass} from './utils/types'
@@ -11,11 +11,11 @@ class AutoPoster implements AutoPosterClass {
 	ready: boolean;
 	webhookManager: WebhookManager;
 	client: any;
-	Instagram: Instagram;
-	Reddit: Reddit;
-	Twitch: any;
-	Twitter: any;
-	Youtube: any;
+	Instagram: Instagram | null;
+	Reddit: Reddit | null;
+	Twitch: Twitch | null;
+	Twitter: Twitter | null;
+	Youtube: Youtube | null;
 	mongoose: any
 	constructor(client: any, public options: Options) {
 		/**
@@ -42,11 +42,11 @@ class AutoPoster implements AutoPosterClass {
 			* The services
 			* @type {ServiceManager}
 		*/
-		if (this.options?.Instagram?.enabled) this.Instagram = new Instagram(this);
-		if (this.options?.Reddit?.enabled) this.Reddit = new Reddit(this);
-		if (this.options?.Twitch?.enabled && this.options.Twitch.clientID && this.options.Twitch.clientSecret) this.Twitch = new Twitch(this);
-		if (this.options?.Twitter?.enabled) this.Twitter = new Twitter(this);
-		if (this.options?.Youtube?.enabled) this.Youtube = new Youtube(this);
+		this.Instagram = (this.options?.Instagram?.enabled) ? new Instagram(this) : null;
+		this.Reddit = (this.options?.Reddit?.enabled) ? new Reddit(this) : null;
+		this.Twitch = (this.options?.Twitch?.enabled) ? new Twitch(this, this.options.Twitch) : null;
+		this.Twitter = (this.options?.Twitter?.enabled) ? new Twitter(this, this.options.Twitter) : null;
+		this.Youtube =  (this.options?.Youtube?.enabled) ? new Youtube(this) : null;
 
 		if (this.options.mongoDBURL) this.mongoose = require('./database').init(this);
 
@@ -56,6 +56,9 @@ class AutoPoster implements AutoPosterClass {
 		}
 	}
 
+	/**
+		* Function for initializing the auto poster
+	*/
 	async init() {
 		await Promise.all([
 			await this.Instagram?.init(),
