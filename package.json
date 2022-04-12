@@ -1,7 +1,7 @@
 {
   "name": "auto-poster-and-notifications",
   "version": "1.0.0",
-  "description": "",
+  "description": "<h1 align=\"center\">   <br>   Auto-poster & notifications   <br> </h1>",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,23 +21,23 @@
   "author": "I am Ben#6686",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Egglord-Discord-Bot/auto-poster-and-notifications.git"
+    "url": "git+https://github.com/Egglord-Discord-Bot/auto-poster-and-notifications.git"
   },
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Egglord-Discord-Bot/auto-poster-and-notifications/issues"
+  },
+  "homepage": "https://github.com/Egglord-Discord-Bot/auto-poster-and-notifications#readme",
+  "directories": {
+    "doc": "docs"
+  },
   "dependencies": {
-    "moment": "^2.29.1",
-    "node-fetch": "^3.2.0",
-    "request": "^2.88.2",
-    "rss-parser": "^3.12.0",
-    "tiktok-scraper": "^1.4.36",
-    "twitter-lite": "^1.1.0"
+    "@types/node": "^17.0.23",
+    "centra": "^2.5.0",
+    "reflect-metadata": "^0.1.13",
+    "tsyringe": "^4.6.0"
   },
   "devDependencies": {
-    "clean-jsdoc-theme": "^3.3.2",
-    "discord.js": "^13.6.0",
-    "eslint": "^8.8.0",
-    "jsdoc": "^3.6.10",
-    "jsdoc-plugin-typescript": "^2.0.6",
-    "mongoose": "^6.2.1"
+    "@types/centra": "^2.2.0"
   }
 }
