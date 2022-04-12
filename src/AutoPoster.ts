@@ -9,8 +9,8 @@ export default class AutoPoster {
     container.registerInstance("manager", this)
   }
   public async init(components: BaseService[]) {
-    for(const compoennt of components) {
-      compoennt.handle();
+    for(const component of components) {
+      component.handle();
     }
     this.ready = true;
   }
