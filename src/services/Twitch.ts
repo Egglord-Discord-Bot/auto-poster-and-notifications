@@ -30,8 +30,8 @@ class TwitchFetcher {
 				if (data && date >= new Date(data.started_at).getTime()) {
 					const embed = new MessageEmbed()
 						.setTitle(data.user_name)
-						.setURL(`https://twitch.tv/${data.login}`)
-						.setImage(data.thumbnail_url.replace('{width}', 1920).replace('{height}', 1080));
+						.setURL(`https://twitch.tv/${data.user_name}`)
+						.setImage(data.thumbnail_url.replace('{width}', '1920').replace('{height}', '1080'));
 					channelIDs.forEach((id) => {this.AutoPoster.webhookManager.addValues(id, embed);});
 				}
 			}
@@ -135,7 +135,7 @@ class TwitchFetcher {
    	* @param {object} queryParams The query sent to twitch API
    	* @returns Promise<TwitchOutput>
   */
-	async request(endpoint: string, queryParams = {}) {
+	async request(endpoint: string, queryParams = {}): Promise<TwitchOutput> {
 		const qParams = new URLSearchParams(queryParams);
 		const data = await fetch(`https://api.twitch.tv/helix${endpoint}?${qParams.toString()}`, {
 			headers: { 'Client-ID': this.options.clientID, 'Authorization': `Bearer ${this.access_token}` },

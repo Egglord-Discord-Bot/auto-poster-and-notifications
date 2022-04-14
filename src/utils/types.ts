@@ -92,7 +92,7 @@ export type TwitchLivestream = {
   is_mature: boolean
 }
 
-export interface TwitchOutput {
+export type TwitchOutput = {
   data?: TwitchLivestream[],
   pagination: {},
   error?: string

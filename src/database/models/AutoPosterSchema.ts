@@ -15,7 +15,7 @@ interface AutoPoster {
 }
 
 const AutoPosterSchema = new Schema<AutoPoster>({
-  guildID: { required: true, },
+  guildID: String,
   Instagram: { default: [] },
   Reddit: { default: [] },
   Youtube: { default: []},
