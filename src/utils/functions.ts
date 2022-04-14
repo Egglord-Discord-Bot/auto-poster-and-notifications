@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	getDate: function() {
 		const date = new Date(),
 			months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],

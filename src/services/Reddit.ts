@@ -1,21 +1,27 @@
-const	{ AutoPosterSchema } = require('../database/models'),
-	{ MessageEmbed } = require('discord.js'),
-	fetch = require('node-fetch');
+import type {AutoPoster} from '../index'
+import {AutoPosterSchema} from '../database/models'
+import { MessageEmbed } from 'discord.js';
+import type { Accounts, Input, Reddit } from '../utils/types'
 let date = Math.floor(Date.now() / 1000);
 
 // Fetch reddit post
 class RedditFetcher {
-	constructor(AutoPoster) {
+	public AutoPoster: AutoPoster
+	public subreddits: Array<Accounts>
+	public enabled: Boolean
+	constructor(AutoPoster: AutoPoster) {
 		this.AutoPoster = AutoPoster;
 		this.subreddits = [];
 		this.enabled = true;
 	}
 
-	// Fetch new posts (every 1 minute)
+	/**
+	 	* Function for fetching new posts on the subreddit
+	*/
 	async fetchPosts() {
 		setInterval(async () => {
 			if (!this.enabled) return;
-			for (const { subredditName: sub, channelIDs } of this.subreddits) {
+			for (const { name: sub, channelIDs } of this.subreddits) {
 				const resp = await fetch(`https://www.reddit.com/r/${sub}/new.json`).then(res => res.json());
 				if (resp.data?.children) {
 					for (const { data } of resp.data.children.reverse()) {
@@ -35,7 +41,9 @@ class RedditFetcher {
 		}, 60000);
 	}
 
-	// Updates subreddit list every 5 minutes
+	/**
+	 	* Function for fetching the subreddit list
+	*/
 	async updateSubredditList() {
 		// fetch reddit data from database
 		const redditData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Reddit));
@@ -46,12 +54,14 @@ class RedditFetcher {
 
 		// Put subreddits with their list of channels to post to
 		this.subreddits = subreddits.map(sub => ({
-			subredditName: sub,
+			name: sub,
 			channelIDs: [...new Set(redditData.map(item => item.filter(obj => obj.Account == sub)).map(obj => obj.map(i => i.channelID)).reduce((a, b) => a.concat(b)))],
 		}));
 	}
 
-	// init the class
+	/**
+	 	* Function for starting the Reddit auto-poster
+	*/
 	async init() {
 		await this.updateSubredditList();
 		await this.fetchPosts();
@@ -62,20 +72,20 @@ class RedditFetcher {
 	}
 
 	/**
-	 * Function for toggling the Reddit auto-poster
-	 * @return {Void}
+	 	* Function for toggling the Reddit auto-poster
 	*/
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-	 * Function for adding a subreddit
-	 * @param {obj.channelID} String The channel where it's being added to
-	 * @param {obj.accountName} String The subreddit that is being added
-	 * @return {Mongoose.Schema}
-	*/
-	async addItem({ channelID, accountName }) {
+   	* Function for adding a subreddit
+   	* @param {input} input the input
+   	* @param {string} input.channelID The channel where it's being added to
+   	* @param {string} input.accountName The subreddit that is being added
+   	* @return Promise<Document>
+  */
+	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -93,12 +103,13 @@ class RedditFetcher {
 	}
 
 	/**
-	 * Function for removing a subreddit
-	 * @param {obj.channelID} String The channel where it's being deleted from
-	 * @param {obj.accountName} String The subreddit that is being deleted
-	 * @return {Mongoose.Schema}
-	*/
-	async deleteItem({ channelID, accountName }) {
+   	* Function for removing an subreddit
+   	* @param {input} input the input
+   	* @param {string} input.channelID The channel where it's being deleted from
+   	* @param {string} input.accountName The subreddit that is being removed
+   	* @return Promise<Document>
+  */
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -110,8 +121,16 @@ class RedditFetcher {
 	}
 }
 
+
 class RedditPost {
-	constructor({ title, subreddit_name_prefixed, permalink, url, author, over_18, media, selftext }) {
+	public title: string
+	public subreddit: string
+	public link: string
+	public imageURL: string
+	public text: string
+	public author: string
+	public nsfw: Boolean
+	constructor({ title, subreddit_name_prefixed, permalink, url, author, over_18, media, selftext }: Reddit) {
 		this.title = title;
 		this.subreddit = subreddit_name_prefixed;
 		this.link = `https://www.reddit.com${permalink}`;
@@ -122,4 +141,4 @@ class RedditPost {
 	}
 }
 
-module.exports = RedditFetcher;
+export default RedditFetcher;

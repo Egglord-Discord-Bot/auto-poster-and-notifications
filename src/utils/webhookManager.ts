@@ -1,7 +1,13 @@
-const { Collection } = require('discord.js');
+import { Collection, MessageEmbed, Webhook } from 'discord.js';
 
+/**
+	* The webhook manager
+	* @type {WebhookManager}
+*/
 class WebhookManager {
-	constructor(client) {
+	public client: any;
+	public messages: Collection<String, Array<MessageEmbed>>;
+	constructor(client: any) {
 		/**
       * The Discord Client
       * @type {Discord.Client}
@@ -23,13 +29,13 @@ class WebhookManager {
 				try {
 					const channel = await this.client.channels.fetch(ID);
 					const webhooks = await channel.fetchWebhooks();
-					let webhook = webhooks.find(wh => wh.name == this.client.user.username);
+					let webhook = webhooks.find((wh: Webhook) => wh.name == this.client.user.username);
 
 					// create webhook if it doesn't exist
 					if (!webhook) webhook = await channel.createWebhook(this.client.user.username);
 
 					// send the embeds
-					const repeats = Math.ceil(this.messages.get(ID).length / 10);
+					const repeats = Math.ceil(this.messages.get(ID)?.length ?? 0 / 10);
 					for (let j = 0; j < repeats; j++) {
 						// Get the embeds
 						const embeds = this.messages.get(ID)?.slice(j * 10, (j * 10) + 10);
@@ -60,14 +66,14 @@ class WebhookManager {
 	 * @param {embed} Discord.MessageEmbed The message that ran the command
 	 * @readonly
 	*/
-	addValues(channelID, embed) {
+	addValues(channelID: String, embed: MessageEmbed) {
 		// collect embeds
 		if (!this.messages.has(channelID)) {
 			this.messages.set(channelID, [embed]);
 		} else {
-			this.messages.set(channelID, [...this.messages.get(channelID), embed]);
+			this.messages.set(channelID, [...this.messages.get(channelID) ?? [], embed]);
 		}
 	}
 }
 
-module.exports = WebhookManager;
+export default WebhookManager;

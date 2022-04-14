@@ -1,16 +1,25 @@
-const { AutoPosterSchema } = require('../database/models'),
-	Twitter = require('twitter-lite'),
-	{ MessageEmbed } = require('discord.js');
+import type {AutoPoster} from '../index'
+import {AutoPosterSchema} from '../database/models'
+import { MessageEmbed } from 'discord.js';
+import Twitter from 'twitter-lite';
+import type { Accounts, Input, TwitterOptions } from '../utils/types'
+
 // Fetch new twitter posts
 class TwitterFetcher {
-	constructor(AutoPoster, config) {
+	public AutoPoster: AutoPoster
+	public twtaccounts: Array<Accounts>
+	public enabled: Boolean
+	public twitter_client: Twitter
+	constructor(AutoPoster: AutoPoster, config: TwitterOptions) {
 		this.AutoPoster = AutoPoster;
 		this.twtaccounts = [];
 		this.enabled = true;
 		this.twitter_client = new Twitter(config);
 	}
 
-	// Fetch new posts
+	/**
+	 	* Function for fetching new posts on the subreddit
+	*/
 	async fetchPosts() {
 		// Create stream
 		const twtaccounts = this.twtaccounts;
@@ -40,33 +49,45 @@ class TwitterFetcher {
 					.setColor('BLUE');
 				if (tweet.retweeted || tweet.text.startsWith('RT')) {
 					console.log(`${tweet.user.name} retreated @${tweet.retweeted_status.user.screen_name}.`);
-					embed.setAuthor(`${tweet.user.name} retweeted: ${tweet.retweeted_status.user.name} (@${tweet.retweeted_status.user.screen_name})`, tweet.retweeted_status.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
+					embed.setAuthor({
+						name: `${tweet.user.name} retweeted: ${tweet.retweeted_status.user.name} (@${tweet.retweeted_status.user.screen_name})`,
+						iconURL: tweet.retweeted_status.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'),
+						url: `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`
+					})
 						.setDescription(tweet.retweeted_status.text.replace(tweet.retweeted_status.entities?.media?.[0].url, ''))
 						.setTimestamp(tweet.retweeted_status.created_at);
 					if (tweet.retweeted_status.entities.media) embed.setImage(tweet.retweeted_status.entities.media?.[0].media_url_https);
-					twtaccounts.find(account => tweet.user.id_str == account.name).channelIDs.forEach(id => {
+					twtaccounts.find(account => tweet.user.id_str == account.name)?.channelIDs.forEach(id => {
 						WebhookManager.addValues(id, embed);
 					});
 				} else if (!tweet.retweeted || !tweet.text.startsWith('RT')) {
 					console.log(`${tweet.user.name} made a tweet.`);
 					if (tweet.in_reply_to_status_id == null || tweet.in_reply_to_user_id == null) {
-						embed.setAuthor(`${tweet.user.name} (@${tweet.user.screen_name})`, tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
+						embed.setAuthor({
+							name: `${tweet.user.name} (@${tweet.user.screen_name})`,
+							iconURL: tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'),
+							url: `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`,
+						})
 							.setDescription(tweet.text)
 							.setTimestamp(tweet.created_at);
 						if (tweet.entities.media) embed.setImage(tweet.entities.media[0].media_url_https);
-						twtaccounts.find(account => tweet.user.id_str == account.name).channelIDs.forEach(id => {
+						twtaccounts.find(account => tweet.user.id_str == account.name)?.channelIDs.forEach(id => {
 							WebhookManager.addValues(id, embed);
 						});
 					}
 				} else if (tweet.in_reply_to_status_id != null || tweet.in_reply_to_user_id != null) {
 					if (tweet.reply) {
 						console.log(`${tweet.user.name} replied to ${tweet.in_reply_to_screen_name}`);
-						embed.setAuthor(`${tweet.user.name} (@${tweet.user.screen_name})\nReply to @${tweet.in_reply_to_screen_name}`, tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'), `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`)
+						embed.setAuthor({
+							name: `${tweet.user.name} (@${tweet.user.screen_name})\nReply to @${tweet.in_reply_to_screen_name}`,
+							iconURL: tweet.user.profile_image_url_https.replace('normal.jpg', '200x200.jpg'),
+							url: `https://twitter.com/${tweet.user.screen_name}/status/${tweet.id_str}`
+						})
 							.setDescription(tweet.text.replace(`@${tweet.in_reply_to_screen_name}`, ''))
 							.setTimestamp(tweet.created_at)
 							.setThumbnail('https://cdn1.iconfinder.com/data/icons/messaging-3/48/Reply-512.png');
 						if (tweet.entities.media) embed.setImage(tweet.entities.media[0].media_url_https);
-						twtaccounts.find(account => tweet.user.id_str == account.name).channelIDs.forEach(id => {
+						twtaccounts.find(account => tweet.user.id_str == account.name)?.channelIDs.forEach(id => {
 							WebhookManager.addValues(id, embed);
 						});
 					}
@@ -88,7 +109,9 @@ class TwitterFetcher {
 		}, 4.5 * 60000);
 	}
 
-	// Updates twitter account list every 5 minutes
+	/**
+	 	* Function for fetching the Twitter list
+	*/
 	async updatingTwitterAccountList() {
 		// fetch reddit data from database
 		const twtData = await AutoPosterSchema.find({}).then(res => res.map(data => data.Twitter));
@@ -107,7 +130,7 @@ class TwitterFetcher {
 			try {
 				const result = await this.twitter_client.get('users/show', { screen_name: twtacc.name });
 				this.twtaccounts.push({ name: result.id_str, channelIDs: twtacc.channelIDs });
-			} catch (err) {
+			} catch (err: any) {
 				if ([50, 63, 32].includes(err.errors[0].code)) {
 					console.log(`${twtacc.name} is an invalid twitter name.`);
 				} else {
@@ -117,7 +140,9 @@ class TwitterFetcher {
 		}
 	}
 
-	// init the class
+	/**
+	 	* Function for starting the Reddit auto-poster
+	*/
 	async init() {
 		await this.updatingTwitterAccountList();
 		await this.fetchPosts();
@@ -131,19 +156,19 @@ class TwitterFetcher {
 
 	/**
    * Function for toggling the Instagram auto-poster
-   * @return {Void}
   */
 	toggle() {
 		this.enabled = !this.enabled;
 	}
 
 	/**
-   * Function for adding an twitter account
-   * @param {obj.channelID} String The channel where it's being added to
-   * @param {obj.accountName} String The twitter account that is being added
-   * @return {Mongoose.Schema}
+   * Function for adding an Twitter account
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being added to
+   * @param {string} input.accountName The Twitter account that is being added
+   * @return Promise<Document>
   */
-	async addItem({ channelID, accountName }) {
+	async addItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		let data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -161,12 +186,13 @@ class TwitterFetcher {
 	}
 
 	/**
-   * Function for removing an twitter account
-   * @param {obj.channelID} String The channel where it's being deleted from
-   * @param {obj.accountName} String The twitter account that is being deleted
-   * @return {Mongoose.Schema}
+   * Function for removing an Twitter account
+   * @param {input} input the input
+   * @param {string} input.channelID The channel where it's being deleted from
+   * @param {string} input.accountName The Twitter account that is being removed
+   * @return Promise<Document>
   */
-	async deleteItem({ channelID, accountName }) {
+	async deleteItem({ channelID, accountName }: Input) {
 		const channel = await this.AutoPoster.client.channels.fetch(channelID);
 		if (!channel.guild?.id) throw new Error('Channel does not have a guild ID.');
 		const data = await AutoPosterSchema.findOne({ guildID: channel.guild.id });
@@ -178,4 +204,4 @@ class TwitterFetcher {
 	}
 }
 
-module.exports = TwitterFetcher;
+export default TwitterFetcher;
