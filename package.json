@@ -38,6 +38,6 @@
     "eslint": "^8.8.0",
     "jsdoc": "^3.6.10",
     "jsdoc-plugin-typescript": "^2.0.6",
-    "mongoose": "^6.2.1"
+    "mongoose": "^6.3.0"
   }
 }
