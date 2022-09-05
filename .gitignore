@@ -1,4 +1,6 @@
 node_modules
-config.js
-jsdocs
+tests
 dist
+.DS_Store
+package-lock.json
+
