@@ -3,3 +3,4 @@ export * from "./webhook/WebhookManager";
 export * from "./schedule";
 export * from "./Util";
 export * as Types from "./Types"
+export * from "./Embed";

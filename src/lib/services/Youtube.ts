@@ -1,5 +1,4 @@
 import RSS from "rss-parser";
-import { Utils } from "@lib";
 import { BaseService } from "./BaseService";
 
 interface YoutubeRecord { shouldUpdate: boolean, result: YoutubeData }
@@ -25,18 +24,13 @@ export class Youtube extends BaseService {
    }
 
    private resolveData(data: YoutubeRawData): YoutubeRecord {
-      const results: YoutubeData[] = [];
-      Object.assign({}, ...data.items.map(item => {
-         const resolve = {
-            channel: data.link,
-            title: item.title,
-            author: item.author, 
-            id: item.id,
-            isNew: Utils.validateTime(new Date(item.pubDate), new Date()),
-            url: item.link,
-            createdAt: new Date(item.pubDate),
-         }
-         results.push(resolve) 
+      const results = data.items.map(item => ({
+         channel: data.link,
+         title: item.title,
+         author: item.author, 
+         id: item.id,
+         url: item.link,
+         createdAt: new Date(item.pubDate),
       }))
       const result = results[0];
       if(!this.record || this.record.result.id !== result.id) return this.record = { result, shouldUpdate: true };
@@ -48,7 +42,6 @@ export class Youtube extends BaseService {
 interface YoutubeData {
    channel: string,
    title: string,
-   isNew: boolean
    author: string,
    id: string,
    url: string,
