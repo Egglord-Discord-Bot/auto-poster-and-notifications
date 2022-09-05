@@ -2,9 +2,16 @@
   "name": "auto-poster-and-notifications",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts"
+  },
+  "_moduleAliases": {
+    "@lib": "dist/lib/index.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node tests/test.test.js",
     "gen-docs": "jsdoc --configure ./jsdoc.json --verbose"
   },
   "keywords": [
@@ -15,9 +22,6 @@
     "Twitter",
     "Reddit"
   ],
-  "files": [
-    "src"
-  ],
   "author": "I am Ben#6686",
   "repository": {
     "type": "git",
@@ -25,19 +29,14 @@
   },
   "license": "ISC",
   "dependencies": {
-    "moment": "^2.29.1",
-    "node-fetch": "^3.2.0",
-    "request": "^2.88.2",
+    "@discordjs/rest": "^1.1.0",
+    "@types/node": "^18.7.15",
+    "discord-api-types": "^0.37.6",
+    "module-alias": "^2.2.2",
+    "reflect-metadata": "^0.1.13",
     "rss-parser": "^3.12.0",
-    "tiktok-scraper": "^1.4.36",
-    "twitter-lite": "^1.1.0"
-  },
-  "devDependencies": {
-    "clean-jsdoc-theme": "^3.3.2",
-    "discord.js": "^13.6.0",
-    "eslint": "^8.8.0",
-    "jsdoc": "^3.6.10",
-    "jsdoc-plugin-typescript": "^2.0.6",
-    "mongoose": "^6.2.1"
+    "tsyringe": "^4.7.0",
+    "typeorm": "^0.3.9",
+    "undici": "^5.10.0"
   }
 }
